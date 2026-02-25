@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { mockComplaints, mockCurrentUser } from '@/data/mockData';
+import { mockComplaints } from '@/data/mockData';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -10,9 +10,7 @@ export default function Dashboard() {
   const [complaints, setComplaints] = useState(mockComplaints);
   const [filteredComplaints, setFilteredComplaints] = useState(mockComplaints);
   const [statusFilter, setStatusFilter] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
 
-  // Check if user is logged in
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (!storedUser) {
@@ -22,31 +20,22 @@ export default function Dashboard() {
     setUser(JSON.parse(storedUser));
   }, []);
 
-  // Filter complaints based on jurisdiction, status, and search
+  // Filter complaints by department and status
   useEffect(() => {
+    if (!user) return;
+    
     let filtered = complaints;
     
-    // Filter by jurisdiction (auto-filter)
-    if (user?.jurisdiction) {
-      filtered = filtered.filter(c => c.jurisdiction === user.jurisdiction);
-    }
+    // Auto-filter by user's department
+    filtered = filtered.filter(c => c.departmentId === user.departmentId);
     
     // Filter by status
     if (statusFilter !== 'all') {
       filtered = filtered.filter(c => c.status === statusFilter);
     }
     
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(c => 
-        c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.citizenName?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
     setFilteredComplaints(filtered);
-  }, [statusFilter, searchTerm, complaints, user]);
+  }, [statusFilter, complaints, user]);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -75,7 +64,7 @@ export default function Dashboard() {
   };
 
   if (!user) {
-    return <div>Loading...</div>;
+    return <div className="container">Loading...</div>;
   }
 
   return (
@@ -85,7 +74,14 @@ export default function Dashboard() {
         <div className="navbar-brand">GovConnect Authority Portal</div>
         <div className="navbar-user">
           <span>Welcome, {user.name}</span>
-          <span style={{ fontSize: '14px' }}>({user.jurisdiction})</span>
+          <span style={{ 
+            backgroundColor: '#1565c0', 
+            padding: '4px 10px', 
+            borderRadius: '4px',
+            fontSize: '14px'
+          }}>
+            {user.department}
+          </span>
           <button onClick={handleLogout} className="logout-btn">
             Logout
           </button>
@@ -94,24 +90,19 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className="container">
+        {/* Department Header */}
         <div className="card">
-          <h2>Complaint Queue</h2>
-          <p>Showing complaints from: <strong>{user.jurisdiction}</strong></p>
+          <h2>Complaints Dashboard</h2>
+          <p>Showing complaints for: <strong>{user.department}</strong></p>
+          <p style={{ color: '#666', fontSize: '14px' }}>
+            Total complaints: {filteredComplaints.length}
+          </p>
         </div>
 
-        {/* Filters */}
+        {/* Status Filter Only - Search Box Removed */}
         <div className="card">
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
-            <div style={{ flex: 1 }}>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Search complaints..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+            <div style={{ width: '200px' }}>
               <select
                 className="form-control"
                 value={statusFilter}
@@ -133,11 +124,9 @@ export default function Dashboard() {
               <tr>
                 <th>ID</th>
                 <th>Title</th>
-                <th>Citizen</th>
                 <th>Status</th>
                 <th>Priority</th>
                 <th>Created</th>
-                <th>Assigned To</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -146,7 +135,6 @@ export default function Dashboard() {
                 <tr key={complaint.id}>
                   <td>{complaint.id}</td>
                   <td>{complaint.title}</td>
-                  <td>{complaint.citizenName}</td>
                   <td>
                     <span className={getStatusBadgeClass(complaint.status)}>
                       {complaint.status}
@@ -158,14 +146,13 @@ export default function Dashboard() {
                     </span>
                   </td>
                   <td>{new Date(complaint.createdAt).toLocaleDateString()}</td>
-                  <td>{complaint.assignedToName || 'Unassigned'}</td>
                   <td>
                     <button
                       className="btn btn-primary"
                       style={{ padding: '5px 10px' }}
                       onClick={() => router.push(`/complaint/${complaint.id}`)}
                     >
-                      View
+                      View & Process
                     </button>
                   </td>
                 </tr>
@@ -175,7 +162,7 @@ export default function Dashboard() {
 
           {filteredComplaints.length === 0 && (
             <div style={{ textAlign: 'center', padding: '40px' }}>
-              No complaints found
+              <p>No complaints found for your department.</p>
             </div>
           )}
         </div>

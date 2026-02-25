@@ -6,8 +6,7 @@ import {
   mockComplaints, 
   mockInternalNotes, 
   mockResponses, 
-  mockAuditTrail,
-  mockOfficers 
+  mockAuditTrail 
 } from '@/data/mockData';
 
 export default function ComplaintDetail() {
@@ -22,15 +21,12 @@ export default function ComplaintDetail() {
   
   // Modal states
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [showAssignModal, setShowAssignModal] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [showResponseModal, setShowResponseModal] = useState(false);
 
   // Form states
   const [newStatus, setNewStatus] = useState('');
   const [statusReason, setStatusReason] = useState('');
-  const [assignType, setAssignType] = useState('self');
-  const [selectedOfficer, setSelectedOfficer] = useState('');
   const [newNote, setNewNote] = useState('');
   const [isPrivateNote, setIsPrivateNote] = useState(true);
   const [newResponse, setNewResponse] = useState('');
@@ -60,7 +56,7 @@ export default function ComplaintDetail() {
     setAuditTrail(mockAuditTrail.filter(a => a.complaintId === complaintId));
   }, [params.id]);
 
-  // Action handlers
+  // Handle update status
   const handleUpdateStatus = () => {
     if (!newStatus) {
       setMessage('Please select a status');
@@ -87,44 +83,7 @@ export default function ComplaintDetail() {
     setTimeout(() => setMessage(''), 3000);
   };
 
-  const handleAssign = () => {
-    let assignedTo = '';
-    let assignedToName = '';
-
-    if (assignType === 'self') {
-      assignedTo = user?.id;
-      assignedToName = user?.name;
-    } else if (assignType === 'other') {
-      if (!selectedOfficer) {
-        setMessage('Please select an officer');
-        return;
-      }
-      const officer = mockOfficers.find(o => o.id === selectedOfficer);
-      assignedTo = officer?.id ?? '';
-      assignedToName = officer?.name ?? '';
-    } else if (assignType === 'office') {
-      assignedTo = 'office';
-      assignedToName = 'Office Pool';
-    }
-
-    // Create audit entry
-    const newAudit = {
-      id: `audit_${Date.now()}`,
-      complaintId: complaint.id,
-      action: 'ASSIGNED',
-      performedBy: user?.id,
-      performedByName: user?.name,
-      timestamp: new Date().toISOString(),
-      details: { assignedTo, assignedToName }
-    };
-
-    setAuditTrail([newAudit, ...auditTrail]);
-    setComplaint({ ...complaint, assignedTo, assignedToName });
-    setShowAssignModal(false);
-    setMessage('Complaint assigned successfully!');
-    setTimeout(() => setMessage(''), 3000);
-  };
-
+  // Handle add note
   const handleAddNote = () => {
     if (!newNote.trim()) {
       setMessage('Please enter a note');
@@ -148,6 +107,7 @@ export default function ComplaintDetail() {
     setTimeout(() => setMessage(''), 3000);
   };
 
+  // Handle add response
   const handleAddResponse = () => {
     if (!newResponse.trim()) {
       setMessage('Please enter a response');
@@ -186,6 +146,24 @@ export default function ComplaintDetail() {
     return <div className="container">Loading...</div>;
   }
 
+  // Check if this complaint belongs to user's department
+  if (complaint.departmentId !== user.departmentId) {
+    return (
+      <div className="container">
+        <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
+          <h2>Access Denied</h2>
+          <p>This complaint does not belong to your department.</p>
+          <button 
+            className="btn btn-primary"
+            onClick={() => router.push('/dashboard')}
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       {/* Navigation */}
@@ -193,6 +171,15 @@ export default function ComplaintDetail() {
         <div className="navbar-brand">GovConnect Authority Portal</div>
         <div className="navbar-user">
           <span>Welcome, {user.name}</span>
+          <span style={{ 
+            backgroundColor: '#1565c0', 
+            padding: '4px 10px', 
+            borderRadius: '4px',
+            fontSize: '14px',
+            marginRight: '10px'
+          }}>
+            {user.department}
+          </span>
           <button onClick={() => router.push('/dashboard')} className="logout-btn">
             Back to Queue
           </button>
@@ -215,27 +202,20 @@ export default function ComplaintDetail() {
               <p style={{ color: '#666' }}>
                 Complaint ID: {complaint.id} | Submitted: {new Date(complaint.createdAt).toLocaleString()}
               </p>
-              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
                 <span className={getStatusBadgeClass(complaint.status)}>
                   {complaint.status}
                 </span>
                 <span className={`badge badge-${complaint.priority}`}>
                   {complaint.priority}
                 </span>
-                {complaint.assignedToName && (
-                  <span className="badge" style={{ backgroundColor: '#e0e0e0', color: '#333' }}>
-                    Assigned to: {complaint.assignedToName}
-                  </span>
-                )}
+                <span className="badge" style={{ backgroundColor: '#e0e0e0', color: '#333' }}>
+                  Department: {complaint.department}
+                </span>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button 
-                className="btn btn-primary"
-                onClick={() => setShowAssignModal(true)}
-              >
-                Assign
-              </button>
+            {/* Only Update Status button remains */}
+            <div>
               <button 
                 className="btn btn-primary"
                 onClick={() => setShowStatusModal(true)}
@@ -248,7 +228,7 @@ export default function ComplaintDetail() {
 
         {/* Tabs */}
         <div className="card">
-          <div style={{ display: 'flex', gap: '20px', borderBottom: '1px solid #ddd', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', gap: '20px', borderBottom: '1px solid #ddd', marginBottom: '20px', flexWrap: 'wrap' }}>
             <button
               style={{
                 padding: '10px',
@@ -299,7 +279,7 @@ export default function ComplaintDetail() {
             </button>
           </div>
 
-          {/* Details Tab */}
+          {/* Details Tab - Citizen Personal Info Removed */}
           {activeTab === 'details' && (
             <div>
               <div className="form-group">
@@ -313,28 +293,25 @@ export default function ComplaintDetail() {
                   <p>{complaint.category}</p>
                 </div>
                 <div className="form-group">
-                  <label>Sub-Category</label>
-                  <p>{complaint.subCategory || 'N/A'}</p>
-                </div>
-                <div className="form-group">
-                  <label>Jurisdiction</label>
-                  <p>{complaint.jurisdiction}</p>
+                  <label>Department</label>
+                  <p>{complaint.department}</p>
                 </div>
                 <div className="form-group">
                   <label>Location</label>
                   <p>{complaint.location}</p>
                 </div>
                 <div className="form-group">
-                  <label>Citizen Name</label>
-                  <p>{complaint.citizenName}</p>
+                  <label>Complaint ID</label>
+                  <p>{complaint.id}</p>
                 </div>
                 <div className="form-group">
-                  <label>Contact</label>
-                  <p>{complaint.citizenContact}</p>
+                  <label>Submitted Date</label>
+                  <p>{new Date(complaint.createdAt).toLocaleString()}</p>
                 </div>
               </div>
 
-              {complaint.attachments.length > 0 && (
+              {/* Attachments Section (if any) */}
+              {complaint.attachments && complaint.attachments.length > 0 && (
                 <div className="form-group">
                   <label>Attachments</label>
                   <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
@@ -360,24 +337,30 @@ export default function ComplaintDetail() {
                 + Add Internal Note
               </button>
               
-              {internalNotes.map(note => (
-                <div key={note.id} className="card" style={{ marginBottom: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <strong>{note.createdByName}</strong>
-                    <small>{new Date(note.createdAt).toLocaleString()}</small>
+              {internalNotes.length === 0 ? (
+                <p style={{ color: '#666', textAlign: 'center', padding: '20px' }}>
+                  No internal notes yet.
+                </p>
+              ) : (
+                internalNotes.map(note => (
+                  <div key={note.id} className="card" style={{ marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <strong>{note.createdByName}</strong>
+                      <small>{new Date(note.createdAt).toLocaleString()}</small>
+                    </div>
+                    <p style={{ marginTop: '10px' }}>{note.note}</p>
+                    {note.isPrivate && (
+                      <span className="badge" style={{ backgroundColor: '#ffd700', color: '#333' }}>
+                        🔒 Private
+                      </span>
+                    )}
                   </div>
-                  <p style={{ marginTop: '10px' }}>{note.note}</p>
-                  {note.isPrivate && (
-                    <span className="badge" style={{ backgroundColor: '#ffd700', color: '#333' }}>
-                      🔒 Private
-                    </span>
-                  )}
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
 
-          {/* Responses Tab */}
+          {/* Responses Tab - Citizen Anonymous */}
           {activeTab === 'responses' && (
             <div>
               <button 
@@ -388,40 +371,51 @@ export default function ComplaintDetail() {
                 + Respond to Citizen
               </button>
               
-              {responses.map(response => (
-                <div key={response.id} className="card" style={{ 
-                  marginBottom: '10px',
-                  backgroundColor: response.isFromCitizen ? '#f5f5f5' : 'white',
-                  border: response.isFromCitizen ? 'none' : '1px solid #1976d2'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <strong>
-                      {response.isFromCitizen ? '👤 ' : '👮 '}
-                      {response.createdByName}
-                    </strong>
-                    <small>{new Date(response.createdAt).toLocaleString()}</small>
+              {responses.length === 0 ? (
+                <p style={{ color: '#666', textAlign: 'center', padding: '20px' }}>
+                  No responses yet.
+                </p>
+              ) : (
+                responses.map(response => (
+                  <div key={response.id} className="card" style={{ 
+                    marginBottom: '10px',
+                    backgroundColor: response.isFromCitizen ? '#f5f5f5' : 'white',
+                    border: response.isFromCitizen ? 'none' : '1px solid #1976d2'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <strong>
+                        {response.isFromCitizen ? '👤 Citizen' : '👮 ' + response.createdByName}
+                      </strong>
+                      <small>{new Date(response.createdAt).toLocaleString()}</small>
+                    </div>
+                    <p style={{ marginTop: '10px' }}>{response.message}</p>
                   </div>
-                  <p style={{ marginTop: '10px' }}>{response.message}</p>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
 
           {/* Audit Trail Tab */}
           {activeTab === 'audit' && (
             <div>
-              {auditTrail.map(entry => (
-                <div key={entry.id} className="card" style={{ marginBottom: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <strong>{entry.action}</strong>
-                    <small>{new Date(entry.timestamp).toLocaleString()}</small>
+              {auditTrail.length === 0 ? (
+                <p style={{ color: '#666', textAlign: 'center', padding: '20px' }}>
+                  No audit trail entries yet.
+                </p>
+              ) : (
+                auditTrail.map(entry => (
+                  <div key={entry.id} className="card" style={{ marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <strong>{entry.action}</strong>
+                      <small>{new Date(entry.timestamp).toLocaleString()}</small>
+                    </div>
+                    <p>By: {entry.performedByName}</p>
+                    <pre style={{ fontSize: '12px', backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '4px' }}>
+                      {JSON.stringify(entry.details, null, 2)}
+                    </pre>
                   </div>
-                  <p>By: {entry.performedByName}</p>
-                  <pre style={{ fontSize: '12px', backgroundColor: '#f5f5f5', padding: '10px' }}>
-                    {JSON.stringify(entry.details, null, 2)}
-                  </pre>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
         </div>
@@ -438,9 +432,10 @@ export default function ComplaintDetail() {
           backgroundColor: 'rgba(0,0,0,0.5)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          zIndex: 1000
         }}>
-          <div className="card" style={{ width: '500px' }}>
+          <div className="card" style={{ width: '500px', maxWidth: '90%' }}>
             <h3>Update Complaint Status</h3>
             
             <div className="form-group">
@@ -488,93 +483,6 @@ export default function ComplaintDetail() {
         </div>
       )}
 
-      {/* Assign Modal */}
-      {showAssignModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <div className="card" style={{ width: '500px' }}>
-            <h3>Assign Complaint</h3>
-            
-            <div className="form-group">
-              <label>Assign to:</label>
-              <div style={{ marginTop: '10px' }}>
-                <label style={{ display: 'block', marginBottom: '10px' }}>
-                  <input
-                    type="radio"
-                    name="assignType"
-                    value="self"
-                    checked={assignType === 'self'}
-                    onChange={(e) => setAssignType(e.target.value)}
-                  /> Myself
-                </label>
-                
-                <label style={{ display: 'block', marginBottom: '10px' }}>
-                  <input
-                    type="radio"
-                    name="assignType"
-                    value="office"
-                    checked={assignType === 'office'}
-                    onChange={(e) => setAssignType(e.target.value)}
-                  /> Office Pool
-                </label>
-                
-                <label style={{ display: 'block', marginBottom: '10px' }}>
-                  <input
-                    type="radio"
-                    name="assignType"
-                    value="other"
-                    checked={assignType === 'other'}
-                    onChange={(e) => setAssignType(e.target.value)}
-                  /> Another Officer
-                </label>
-              </div>
-            </div>
-
-            {assignType === 'other' && (
-              <div className="form-group">
-                <label>Select Officer</label>
-                <select 
-                  className="form-control"
-                  value={selectedOfficer}
-                  onChange={(e) => setSelectedOfficer(e.target.value)}
-                >
-                  <option value="">Select an officer</option>
-                  {mockOfficers.map(officer => (
-                    <option key={officer.id} value={officer.id}>
-                      {officer.name} - {officer.role}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button 
-                className="btn btn-secondary"
-                onClick={() => setShowAssignModal(false)}
-              >
-                Cancel
-              </button>
-              <button 
-                className="btn btn-primary"
-                onClick={handleAssign}
-              >
-                Assign
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Add Note Modal */}
       {showNoteModal && (
         <div style={{
@@ -586,9 +494,10 @@ export default function ComplaintDetail() {
           backgroundColor: 'rgba(0,0,0,0.5)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          zIndex: 1000
         }}>
-          <div className="card" style={{ width: '500px' }}>
+          <div className="card" style={{ width: '500px', maxWidth: '90%' }}>
             <h3>Add Internal Note</h3>
             
             <div className="form-group">
@@ -642,9 +551,10 @@ export default function ComplaintDetail() {
           backgroundColor: 'rgba(0,0,0,0.5)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          zIndex: 1000
         }}>
-          <div className="card" style={{ width: '500px' }}>
+          <div className="card" style={{ width: '500px', maxWidth: '90%' }}>
             <h3>Respond to Citizen</h3>
             
             <div className="form-group">
