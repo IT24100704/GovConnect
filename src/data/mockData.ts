@@ -158,8 +158,106 @@ export const mockUsers = [
     department: "Electricity Board",
     departmentId: "dept_004",
     role: "Complaint Officer"
+  },
+  {
+    id: "admin_001",
+    name: "System Administrator",
+    email: "admin@govconnect.lk",
+    password: "adminpassword",
+    userType: "admin",
+    role: "Super Admin"
   }
 ];
+
+export const sriLankaGeography = [
+  {
+    id: "prov_1",
+    name: "Western Province",
+    districts: [
+      {
+        id: "dist_1",
+        name: "Colombo",
+        dsDivisions: [
+          { id: "ds_1", name: "Kaduwela", gsDivisions: ["Kaduwela South", "Kaduwela North", "Weliwita", "Hewagama"] },
+          { id: "ds_2", name: "Maharagama", gsDivisions: ["Maharagama Town", "Nawinna", "Watthegedara", "Egodawatta"] }
+        ]
+      },
+      { id: "dist_2", name: "Gampaha", dsDivisions: [{ id: "ds_3", name: "Negombo", gsDivisions: ["Negombo Town", "Daluwakotuwa"] }] },
+      { id: "dist_3", name: "Kalutara", dsDivisions: [{ id: "ds_4", name: "Kalutara", gsDivisions: ["Kalutara North", "Kalutara South"] }] }
+    ]
+  },
+  {
+    id: "prov_2",
+    name: "Central Province",
+    districts: [
+      { id: "dist_4", name: "Kandy", dsDivisions: [{ id: "ds_5", name: "Kandy Five Gravets", gsDivisions: ["Kandy Town", "Peradeniya"] }] },
+      { id: "dist_5", name: "Matale", dsDivisions: [{ id: "ds_6", name: "Matale", gsDivisions: ["Matale Town"] }] },
+      { id: "dist_6", name: "Nuwara Eliya", dsDivisions: [{ id: "ds_7", name: "Nuwara Eliya", gsDivisions: ["Nuwara Eliya Town"] }] }
+    ]
+  },
+  {
+    id: "prov_3",
+    name: "Southern Province",
+    districts: [
+      { id: "dist_7", name: "Galle", dsDivisions: [{ id: "ds_8", name: "Galle Four Gravets", gsDivisions: ["Galle Fort", "Dadalla"] }] },
+      { id: "dist_8", name: "Matara", dsDivisions: [{ id: "ds_9", name: "Matara Four Gravets", gsDivisions: ["Matara Town"] }] },
+      { id: "dist_9", name: "Hambantota", dsDivisions: [{ id: "ds_10", name: "Hambantota", gsDivisions: ["Hambantota Town"] }] }
+    ]
+  },
+  {
+    id: "prov_4",
+    name: "North Western Province",
+    districts: [
+      { id: "dist_10", name: "Kurunegala", dsDivisions: [{ id: "ds_11", name: "Kurunegala", gsDivisions: ["Kurunegala Town"] }] },
+      { id: "dist_11", name: "Puttalam", dsDivisions: [{ id: "ds_12", name: "Puttalam", gsDivisions: ["Puttalam Town"] }] }
+    ]
+  },
+  {
+    id: "prov_5",
+    name: "Sabaragamuwa Province",
+    districts: [
+      { id: "dist_12", name: "Ratnapura", dsDivisions: [{ id: "ds_13", name: "Ratnapura", gsDivisions: ["Ratnapura Town"] }] },
+      { id: "dist_13", name: "Kegalle", dsDivisions: [{ id: "ds_14", name: "Kegalle", gsDivisions: ["Kegalle Town"] }] }
+    ]
+  },
+  {
+    id: "prov_6",
+    name: "Eastern Province",
+    districts: [
+      { id: "dist_14", name: "Trincomalee", dsDivisions: [{ id: "ds_15", name: "Trincomalee Town", gsDivisions: ["Trincomalee Town"] }] },
+      { id: "dist_15", name: "Batticaloa", dsDivisions: [{ id: "ds_16", name: "Batticaloa", gsDivisions: ["Batticaloa Town"] }] },
+      { id: "dist_16", name: "Ampara", dsDivisions: [{ id: "ds_17", name: "Ampara", gsDivisions: ["Ampara Town"] }] }
+    ]
+  },
+  {
+    id: "prov_7",
+    name: "Uva Province",
+    districts: [
+      { id: "dist_17", name: "Badulla", dsDivisions: [{ id: "ds_18", name: "Badulla", gsDivisions: ["Badulla Town"] }] },
+      { id: "dist_18", name: "Moneragala", dsDivisions: [{ id: "ds_19", name: "Moneragala", gsDivisions: ["Moneragala Town"] }] }
+    ]
+  },
+  {
+    id: "prov_8",
+    name: "North Central Province",
+    districts: [
+      { id: "dist_19", name: "Anuradhapura", dsDivisions: [{ id: "ds_20", name: "Anuradhapura", gsDivisions: ["Anuradhapura Town"] }] },
+      { id: "dist_20", name: "Polonnaruwa", dsDivisions: [{ id: "ds_21", name: "Polonnaruwa", gsDivisions: ["Polonnaruwa Town"] }] }
+    ]
+  },
+  {
+    id: "prov_9",
+    name: "Northern Province",
+    districts: [
+      { id: "dist_21", name: "Jaffna", dsDivisions: [{ id: "ds_22", name: "Jaffna", gsDivisions: ["Jaffna Town"] }] },
+      { id: "dist_22", name: "Kilinochchi", dsDivisions: [{ id: "ds_23", name: "Kilinochchi", gsDivisions: ["Kilinochchi Town"] }] },
+      { id: "dist_23", name: "Mannar", dsDivisions: [{ id: "ds_24", name: "Mannar", gsDivisions: ["Mannar Town"] }] },
+      { id: "dist_24", name: "Vavuniya", dsDivisions: [{ id: "ds_25", name: "Vavuniya", gsDivisions: ["Vavuniya Town"] }] },
+      { id: "dist_25", name: "Mullaitivu", dsDivisions: [{ id: "ds_26", name: "Mullaitivu", gsDivisions: ["Mullaitivu Town"] }] }
+    ]
+  }
+];
+
 
 // Mock complaints with department assignments
 export const mockComplaints = [
@@ -178,6 +276,38 @@ export const mockComplaints = [
     departmentId: "dept_001",
     department: "Municipal Council",
     location: "Main Street, Colombo",
+    attachments: []
+  },
+  {
+    id: "CMP010",
+    title: "Old building wall collapsed",
+    description: "Safety hazard near the bus stand. Resolved by clearing debris.",
+    category: "Safety",
+    status: "resolved",
+    priority: "high",
+    createdAt: "2024-02-10T11:00:00Z",
+    citizenId: "cit_001",
+    citizenName: "Nimal Silva",
+    citizenContact: "0771234567",
+    departmentId: "dept_001",
+    department: "Municipal Council",
+    location: "Pettah, Colombo",
+    attachments: []
+  },
+  {
+    id: "CMP011",
+    title: "Broken manhole cover",
+    description: "Successfully replaced near the public park.",
+    category: "Infrastructure",
+    status: "resolved",
+    priority: "medium",
+    createdAt: "2024-02-12T09:30:00Z",
+    citizenId: "cit_004",
+    citizenName: "Sunil Fernando",
+    citizenContact: "0789876543",
+    departmentId: "dept_001",
+    department: "Municipal Council",
+    location: "Viharamahadevi Park",
     attachments: []
   },
   {
