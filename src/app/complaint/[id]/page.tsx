@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Image from 'next/image';
 import { 
   mockComplaints, 
   mockInternalNotes, 
@@ -34,6 +35,12 @@ export default function ComplaintDetail() {
   const [isPrivateNote, setIsPrivateNote] = useState(true);
   const [newResponse, setNewResponse] = useState('');
   const [message, setMessage] = useState('');
+
+  const responseTemplates = [
+    'We have received your complaint and an officer has started reviewing the case.',
+    'Please share additional details (photos, landmarks, or time of incident) to proceed faster.',
+    'Your complaint has been resolved. Please confirm whether the issue is fully addressed.',
+  ];
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -207,6 +214,30 @@ export default function ComplaintDetail() {
               <p style={{ lineHeight: '1.8', color: '#1e293b', fontSize: '16px', margin: 0 }}>{complaint.description}</p>
             </div>
 
+            <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid #eb7400', marginBottom: '30px' }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#eb7400', fontSize: '16px', fontWeight: '800', borderBottom: '2px solid #fff1e6', paddingBottom: '10px' }}>
+                EVIDENCE & ATTACHMENTS
+              </h3>
+              {complaint.attachments?.length === 0 ? (
+                <div style={{ backgroundColor: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '10px', padding: '20px', color: '#64748b', fontSize: '14px' }}>
+                  No evidence images attached to this complaint.
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
+                  {complaint.attachments?.map((file: string, index: number) => (
+                    <Image
+                      key={`attached-${index}`}
+                      src={file}
+                      alt={`Evidence ${index + 1}`}
+                      width={240}
+                      height={120}
+                      style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '10px', border: '1px solid #e2e8f0' }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid #00534e', marginBottom: '30px' }}>
               <h3 style={{ margin: '0 0 15px 0', color: '#00534e', fontSize: '16px', fontWeight: '800', borderBottom: '2px solid #f0f8f7', paddingBottom: '10px' }}>
                 LOGISTICS & LOCATION
@@ -269,6 +300,32 @@ export default function ComplaintDetail() {
 
                 {activeTab === 'responses' && (
                   <div>
+                    <div style={{ marginBottom: '12px' }}>
+                      <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '800', marginBottom: '8px' }}>QUICK RESPONSE TEMPLATES</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {responseTemplates.map((template, index) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              setNewResponse(template);
+                              setShowResponseModal(true);
+                            }}
+                            style={{
+                              padding: '8px 10px',
+                              borderRadius: '999px',
+                              border: '1px solid #00534e30',
+                              backgroundColor: '#f0f8f7',
+                              color: '#00534e',
+                              fontSize: '12px',
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Use Template {index + 1}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <button onClick={() => setShowResponseModal(true)} style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '8px', border: '2px dashed #00534e', background: '#f0f8f7', color: '#00534e', fontWeight: '700', cursor: 'pointer' }}>
                       + SEND RESPONSE TO CITIZEN
                     </button>

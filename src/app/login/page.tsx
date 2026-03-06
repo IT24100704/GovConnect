@@ -12,16 +12,23 @@ export default function LoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Find user by email and password
-    const user = mockUsers.find(u => u.email === email && u.password === password);
-    
+
+    const user = mockUsers.find((u) => u.email === email && u.password === password);
+
     if (user) {
-      // Store user data (don't store password!)
-      const { password, ...userWithoutPassword } = user;
+      const userWithoutPassword = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        departmentId: user.departmentId,
+        department: user.department,
+        role: user.role,
+        userType: user.userType,
+        phone: user.phone,
+        avatar: user.avatar,
+      };
       localStorage.setItem('user', JSON.stringify(userWithoutPassword));
-      
-      // Redirect based on user type
+
       if (user.userType === 'admin') {
         router.push('/admin/dashboard');
       } else {
@@ -33,140 +40,149 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      backgroundColor: '#f0f2f5',
-      fontFamily: 'Arial, sans-serif'
-    }}>
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '40px', 
-        borderRadius: '8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        width: '100%',
-        maxWidth: '400px'
-      }}>
-        <h1 style={{ 
-          textAlign: 'center', 
-          color: '#1976d2',
-          marginBottom: '10px',
-          fontSize: '28px'
-        }}>
-          GovConnect
-        </h1>
-        <h2 style={{ 
-          textAlign: 'center', 
-          color: '#666',
-          marginBottom: '30px',
-          fontSize: '18px',
-          fontWeight: 'normal'
-        }}>
-          Authority Portal
-        </h2>
-
-        <form onSubmit={handleLogin}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '5px', 
-              fontWeight: 'bold',
-              color: '#333'
-            }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '16px',
-                boxSizing: 'border-box'
-              }}
-              placeholder="Enter your work email"
-              required
-            />
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '5px', 
-              fontWeight: 'bold',
-              color: '#333'
-            }}>
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '16px',
-                boxSizing: 'border-box'
-              }}
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-
-          {error && (
-            <div style={{ 
-              backgroundColor: '#ffebee', 
-              color: '#c62828', 
-              padding: '10px', 
-              borderRadius: '4px',
-              marginBottom: '20px',
-              textAlign: 'center',
-              fontSize: '14px'
-            }}>
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#1976d2',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            Login
-          </button>
-        </form>
-
-        <div style={{ 
-          marginTop: '30px', 
-          padding: '15px', 
-          backgroundColor: '#f5f5f5', 
-          borderRadius: '4px',
-          fontSize: '14px'
-        }}>
-          <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>
-            Department Login Credentials:
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        backgroundColor: '#f8fafc',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        backgroundImage:
+          'linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)), url("/sl-admin-bg.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '460px',
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.08)',
+          border: '1px solid #ffbe29',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: '#8d153a',
+            color: 'white',
+            padding: '28px 30px',
+            borderBottom: '3px solid #ffbe29',
+          }}
+        >
+          <h1 style={{ margin: 0, fontSize: '30px', color: '#ffbe29', fontWeight: 800 }}>GovConnect</h1>
+          <p style={{ margin: '8px 0 0', color: '#eb7400', fontWeight: 700, fontSize: '13px', letterSpacing: '0.08em' }}>
+            AUTHORITY PORTAL
           </p>
-          <p style={{ margin: '5px 0' }}>🏛️ <strong>Municipal Council:</strong> kamal@municipal.gov.lk / password123</p>
-          <p style={{ margin: '5px 0' }}>👮 <strong>Police Department:</strong> nadeeka@police.gov.lk / password123</p>
-          <p style={{ margin: '5px 0' }}>💧 <strong>Water Board:</strong> ruwan@waterboard.gov.lk / password123</p>
-          <p style={{ margin: '5px 0' }}>⚡ <strong>Electricity Board:</strong> malini@ceb.gov.lk / password123</p>
-          <p style={{ margin: '10px 0 5px 0', borderTop: '1px solid #ddd', paddingTop: '10px' }}>🔐 <strong>System Admin:</strong> admin@govconnect.lk / adminpassword</p>
+        </div>
+
+        <div style={{ padding: '28px 30px 24px' }}>
+          <form onSubmit={handleLogin}>
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', color: '#8d153a', fontWeight: 700 }}>Work Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '15px',
+                  outline: 'none',
+                }}
+                placeholder="Enter your work email"
+                required
+              />
+            </div>
+
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', color: '#8d153a', fontWeight: 700 }}>Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '15px',
+                  outline: 'none',
+                }}
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+
+            {error && (
+              <div
+                style={{
+                  marginBottom: '18px',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: '#ffebee',
+                  color: '#c62828',
+                  border: '1px solid #ffcdd2',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: 'none',
+                borderRadius: '8px',
+                backgroundColor: '#8d153a',
+                color: 'white',
+                fontSize: '15px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Login
+            </button>
+          </form>
+        </div>
+
+        <div
+          style={{
+            margin: '0 20px 20px',
+            padding: '14px 15px',
+            backgroundColor: '#fff8e6',
+            border: '1px solid #ffbe29',
+            borderRadius: '10px',
+            fontSize: '13px',
+            color: '#334155',
+          }}
+        >
+          <p style={{ margin: '0 0 8px', fontWeight: 800, color: '#8d153a' }}>Department Login Credentials</p>
+          <p style={{ margin: '4px 0' }}>
+            <strong>Municipal Council:</strong> kamal@municipal.gov.lk / password123
+          </p>
+          <p style={{ margin: '4px 0' }}>
+            <strong>Police Department:</strong> nadeeka@police.gov.lk / password123
+          </p>
+          <p style={{ margin: '4px 0' }}>
+            <strong>Water Board:</strong> ruwan@waterboard.gov.lk / password123
+          </p>
+          <p style={{ margin: '4px 0' }}>
+            <strong>Electricity Board:</strong> malini@ceb.gov.lk / password123
+          </p>
+          <p style={{ margin: '8px 0 0', borderTop: '1px solid #f1d48a', paddingTop: '8px' }}>
+            <strong>System Admin:</strong> admin@govconnect.lk / adminpassword
+          </p>
         </div>
       </div>
     </div>

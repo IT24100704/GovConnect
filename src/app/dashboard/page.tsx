@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { mockComplaints } from '@/data/mockData';
 
@@ -10,7 +10,10 @@ export default function AuthorityDashboard() {
   const [complaints, setComplaints] = useState(mockComplaints);
   const [filteredComplaints, setFilteredComplaints] = useState(mockComplaints);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'assignments', 'resolved'
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -21,6 +24,17 @@ export default function AuthorityDashboard() {
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
   }, [router]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Filter complaints by department, status, and side-tab
   useEffect(() => {
@@ -39,13 +53,67 @@ export default function AuthorityDashboard() {
     if (statusFilter !== 'all') {
       filtered = filtered.filter(c => c.status === statusFilter);
     }
+
+    if (searchTerm.trim()) {
+      const query = searchTerm.trim().toLowerCase();
+      filtered = filtered.filter(c =>
+        c.id.toLowerCase().includes(query) ||
+        c.title.toLowerCase().includes(query) ||
+        c.description.toLowerCase().includes(query)
+      );
+    }
     
     setFilteredComplaints(filtered);
-  }, [statusFilter, complaints, user, activeTab]);
+  }, [statusFilter, searchTerm, complaints, user, activeTab]);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
     router.push('/login');
+  };
+
+  const getSlaHours = (priority: string) => {
+    if (priority === 'urgent') return 24;
+    if (priority === 'high') return 48;
+    return 72;
+  };
+
+  const dashboardReferenceTime = new Date('2024-02-18T00:00:00Z').getTime();
+
+  const getElapsedHours = (createdAt: string) => {
+    return Math.floor((dashboardReferenceTime - new Date(createdAt).getTime()) / (1000 * 60 * 60));
+  };
+
+  const getSlaMeta = (complaint: { priority: string; createdAt: string; status: string }) => {
+    const targetHours = getSlaHours(complaint.priority);
+    const elapsedHours = getElapsedHours(complaint.createdAt);
+    const remainingHours = targetHours - elapsedHours;
+
+    if (complaint.status === 'resolved' || complaint.status === 'rejected') {
+      return { label: 'Closed', color: '#4caf50', bg: '#e8f5e9', overdue: false };
+    }
+
+    if (remainingHours < 0) {
+      const overdueHours = Math.abs(remainingHours);
+      return {
+        label: `Overdue ${overdueHours >= 24 ? `${Math.floor(overdueHours / 24)}d` : `${overdueHours}h`}`,
+        color: '#d32f2f',
+        bg: '#ffebee',
+        overdue: true,
+      };
+    }
+
+    return {
+      label: `Due in ${remainingHours >= 24 ? `${Math.floor(remainingHours / 24)}d` : `${remainingHours}h`}`,
+      color: '#00534e',
+      bg: '#e6f4f3',
+      overdue: false,
+    };
+  };
+
+  const getLastUpdateLabel = (createdAt: string) => {
+    const elapsedHours = getElapsedHours(createdAt);
+    if (elapsedHours < 24) return `${elapsedHours}h ago`;
+    return `${Math.floor(elapsedHours / 24)}d ago`;
   };
 
   if (!user) return <div style={{ padding: '20px' }}>Loading...</div>;
@@ -137,13 +205,139 @@ export default function AuthorityDashboard() {
             </h1>
             <p style={{ color: '#00534e', margin: '5px 0 0', fontWeight: '600' }}>{user.department} | {user.role}</p>
           </div>
-          <div style={{ backgroundColor: 'white', padding: '10px 20px', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: '10px', border: '2px solid #ffbe29' }}>
-            <div style={{ width: '35px', height: '35px', backgroundColor: '#eb7400', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>
-              {user.name.charAt(0)}
-            </div>
-            <span style={{ fontWeight: '700', color: '#8d153a' }}>{user.name}</span>
+          <div ref={profileMenuRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowProfileMenu((prev) => !prev)}
+              style={{
+                backgroundColor: 'white',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                border: '2px solid #ffbe29',
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{ width: '35px', height: '35px', backgroundColor: '#eb7400', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>
+                {user.name.charAt(0)}
+              </div>
+              <span style={{ fontWeight: '700', color: '#8d153a' }}>{user.name}</span>
+            </button>
+
+            {showProfileMenu && (
+              <div
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 'calc(100% + 10px)',
+                  width: '280px',
+                  backgroundColor: 'white',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.12)',
+                  border: '1px solid #ffbe29',
+                  overflow: 'hidden',
+                  zIndex: 100,
+                }}
+              >
+                <div style={{ padding: '14px 16px', backgroundColor: '#fdf4f6', borderBottom: '1px solid #fde7ec' }}>
+                  <div style={{ color: '#8d153a', fontWeight: '800', fontSize: '14px' }}>{user.name}</div>
+                  <div style={{ color: '#64748b', fontSize: '12px', marginTop: '2px' }}>{user.email}</div>
+                </div>
+
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '700' }}>DEPARTMENT</div>
+                  <div style={{ fontSize: '13px', color: '#1e293b', fontWeight: '700', marginTop: '2px' }}>{user.department}</div>
+                </div>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '700' }}>ROLE</div>
+                  <div style={{ fontSize: '13px', color: '#1e293b', fontWeight: '700', marginTop: '2px' }}>{user.role}</div>
+                </div>
+                <div style={{ padding: '12px 16px' }}>
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      backgroundColor: '#8d153a',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: '700',
+                    }}
+                  >
+                    Logout
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </header>
+
+        <div style={{ backgroundColor: 'white', borderRadius: '12px', border: '1px solid #ffbe29', padding: '16px 18px', marginBottom: '22px', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by case ID, title, or description..."
+              style={{
+                flex: '1 1 280px',
+                minWidth: '220px',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                outline: 'none',
+                fontSize: '14px',
+              }}
+            />
+            <button
+              onClick={() => {
+                setStatusFilter('all');
+                setSearchTerm('');
+              }}
+              style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                backgroundColor: '#f8fafc',
+                color: '#334155',
+                cursor: 'pointer',
+                fontWeight: '700',
+                fontSize: '12px',
+              }}
+            >
+              Clear Filters
+            </button>
+          </div>
+          <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {[
+              { label: 'All', value: 'all' },
+              { label: 'Pending', value: 'pending' },
+              { label: 'In Progress', value: 'in-progress' },
+              { label: 'Resolved', value: 'resolved' },
+            ].map((chip) => (
+              <button
+                key={chip.value}
+                onClick={() => setStatusFilter(chip.value)}
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '999px',
+                  border: statusFilter === chip.value ? '1px solid #8d153a' : '1px solid #dbe2ea',
+                  backgroundColor: statusFilter === chip.value ? '#fdf4f6' : 'white',
+                  color: statusFilter === chip.value ? '#8d153a' : '#475569',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                }}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Stats Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
@@ -196,21 +390,24 @@ export default function AuthorityDashboard() {
                   <th style={{ padding: '18px 25px', color: '#64748b', fontWeight: '700', fontSize: '13px' }}>CASE DETAILS</th>
                   <th style={{ padding: '18px 25px', color: '#64748b', fontWeight: '700', fontSize: '13px' }}>STATUS</th>
                   <th style={{ padding: '18px 25px', color: '#64748b', fontWeight: '700', fontSize: '13px' }}>PRIORITY</th>
-                  <th style={{ padding: '18px 25px', color: '#64748b', fontWeight: '700', fontSize: '13px' }}>SUBMITTED</th>
+                  <th style={{ padding: '18px 25px', color: '#64748b', fontWeight: '700', fontSize: '13px' }}>SLA</th>
+                  <th style={{ padding: '18px 25px', color: '#64748b', fontWeight: '700', fontSize: '13px' }}>LAST UPDATE</th>
                   <th style={{ padding: '18px 25px', color: '#64748b', fontWeight: '700', fontSize: '13px', textAlign: 'center' }}>ACTION</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredComplaints.length === 0 ? (
                   <tr>
-                    <td colSpan={5} style={{ padding: '50px', textAlign: 'center', color: '#64748b' }}>
+                    <td colSpan={6} style={{ padding: '50px', textAlign: 'center', color: '#64748b' }}>
                       <div style={{ fontSize: '40px', marginBottom: '10px' }}>📭</div>
                       No complaints found for the selected criteria.
                     </td>
                   </tr>
                 ) : (
-                  filteredComplaints.map(complaint => (
-                    <tr key={complaint.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  filteredComplaints.map(complaint => {
+                    const sla = getSlaMeta(complaint);
+                    return (
+                    <tr key={complaint.id} style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: sla.overdue ? '#fff8f8' : 'white' }}>
                       <td style={{ padding: '18px 25px' }}>
                         <div style={{ fontWeight: '700', color: '#1e293b' }}>{complaint.title}</div>
                         <div style={{ fontSize: '13px', color: '#8d153a', fontWeight: '600' }}>ID: {complaint.id}</div>
@@ -237,8 +434,25 @@ export default function AuthorityDashboard() {
                           {complaint.priority.toUpperCase()}
                         </span>
                       </td>
-                      <td style={{ padding: '18px 25px', color: '#64748b', fontSize: '14px' }}>
-                        {new Date(complaint.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      <td style={{ padding: '18px 25px' }}>
+                        <span
+                          style={{
+                            backgroundColor: sla.bg,
+                            color: sla.color,
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: '800',
+                          }}
+                        >
+                          {sla.label}
+                        </span>
+                      </td>
+                      <td style={{ padding: '18px 25px' }}>
+                        <div style={{ color: '#475569', fontWeight: '700', fontSize: '13px' }}>{getLastUpdateLabel(complaint.createdAt)}</div>
+                        <div style={{ color: '#94a3b8', fontSize: '12px' }}>
+                          Submitted {new Date(complaint.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </div>
                       </td>
                       <td style={{ padding: '18px 25px', textAlign: 'center' }}>
                         <button
@@ -249,7 +463,7 @@ export default function AuthorityDashboard() {
                         </button>
                       </td>
                     </tr>
-                  ))
+                  )})
                 )}
               </tbody>
             </table>
