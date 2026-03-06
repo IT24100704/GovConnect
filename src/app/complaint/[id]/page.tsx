@@ -6,128 +6,9 @@ import {
   mockComplaints, 
   mockInternalNotes, 
   mockResponses, 
-  mockAuditTrail 
+  mockAuditTrail,
+  governmentDepartments
 } from '@/data/mockData';
-
-// Government Departments List (from your image)
-const governmentDepartments = [
-  "Central Bank of Sri Lanka",
-  "Ceylon Electricity Board",
-  "Colombo Municipal Council",
-  "Colombo Stock Exchange",
-  "Commission to Investigate Allegations of Bribe",
-  "Department of Animal Production and Health",
-  "Department of Archives",
-  "Department of Buddhist Affairs",
-  "Department of Commerce",
-  "Department of Examinations",
-  "Department of Export Agriculture",
-  "Department of Fisheries and Aquatic Resources",
-  "Department of Government Factory",
-  "Department of Government Printing (Gazzettes)",
-  "Department of Hindu Affairs",
-  "Department of Immigration and Emigration",
-  "Department of Land Settlement",
-  "Department of Meteorology",
-  "Department of Motor Traffic",
-  "Department of National Botanic Gardens",
-  "Department of Official Languages",
-  "Department of Public Trustee",
-  "Department of Railways",
-  "Department of Samurdhi Development",
-  "Department of Social Services",
-  "Department of Technical Education and Training",
-  "Department of Valuation",
-  "Department of Wildlife Conservation",
-  "Disaster Management Centre",
-  "Epidemiology Unit",
-  "eProcurement",
-  "Geological Survey and Mines Bureau",
-  "Health Promotion Bureau",
-  "Hector Kobbekaduwa Agrarian Research and Training Institute",
-  "Information and Communication Technology Agency of Sri Lanka",
-  "Lanka Electricity Company (Pvt) Ltd",
-  "Mahaweli Authority of Sri Lanka",
-  "Ministry of Agriculture",
-  "Ministry of Child Development and Women`s Affairs",
-  "Ministry of Culture and Art Affairs",
-  "Ministry of Defence and Urban Development",
-  "Ministry of Digital Economy",
-  "Ministry of Disaster Management",
-  "Ministry of Education",
-  "Ministry of Enterprise Development and Investment Promotion",
-  "Ministry of Finance and Planning",
-  "Ministry of Fisheries and Aquatic Resource Development",
-  "Ministry of Foreign Affairs",
-  "Ministry of Health",
-  "Ministry of Higher Education",
-  "Ministry of Highways",
-  "Ministry of Highways and Road Development – Maga Naguma Division",
-  "Ministry of Highways, Ports Shipping",
-  "Ministry of Housing and Common Amenities",
-  "Ministry of Indigenous Medicine",
-  "Ministry of Industries",
-  "Ministry of Irrigation & Water Resources Management",
-  "Ministry of Justice",
-  "Ministry of Justice and Law Reforms",
-  "Ministry of Labour and Labour Relations",
-  "Ministry of Land and Land Development",
-  "Ministry of Livestock and Rural Community Development",
-  "Ministry of Local Government and Provincial Councils",
-  "Ministry of Mass Media and Information",
-  "Ministry of Nation Building and State Infrastructure Development",
-  "Ministry of National Heritage Cultural Affairs",
-  "Ministry of Parliamentary Affairs",
-  "Ministry of Petroleum Industries",
-  "Ministry of Plan Implementation",
-  "Ministry of Plantation Industries",
-  "Ministry of Postal Services",
-  "Ministry of Power and Energy",
-  "Ministry of Public Administration and Home Affairs",
-  "Ministry of Public Administration, Home Affairs, Provincial Councils and Local Government",
-  "Ministry of Religious Affairs and Moral Upliftment",
-  "Ministry of Resettlement",
-  "Ministry of Sport",
-  "Ministry of State Resources and Enterprise Development",
-  "Ministry of Technology, Research and Atomic Energy",
-  "Ministry of Textile Industry Development",
-  "Ministry of Tourism",
-  "Ministry of Trade, Commerce, Food security and Co-operative Development",
-  "Ministry of Traditional Industries Small Enterprises Development",
-  "Ministry of Transport",
-  "Ministry of Urban Development and Housing – Housing & Construction Division",
-  "Ministry of Urban Development and Sacred Area Development",
-  "Ministry of Vocational and Technical Training",
-  "Ministry of Water Supply and Drainage",
-  "Ministry of Women, Child Affairs & Social Empowerment",
-  "Ministry of Youth Affairs Skills Development",
-  "National Secretariat for Non-governmental Organizations",
-  "National Water Supply & Drainage Board",
-  "Public Service Commission",
-  "Registrar General's Department",
-  "Registrar of Companies",
-  "Road Development Authority",
-  "Sri Lanka Air force",
-  "Sri Lanka Army",
-  "Sri Lanka Ayurvedic Drugs Corporation",
-  "Sri Lanka Export Development Board",
-  "Sri Lanka Land Reclamation and Development Corporation",
-  "Sri Lanka Planetarium",
-  "Sri Lanka Police",
-  "Sri Lanka Post",
-  "Sri Lanka Railways",
-  "Sri Lanka Standards Institute",
-  "Sri Lanka Tea Board",
-  "Sri Lanka Tourism",
-  "Sri Lanka Tourism Development Authority",
-  "Survey Department",
-  "Tea Small Holdings Development Authority",
-  "Telecommunications Regulatory Commission of Sri Lanka",
-  "The Parliament",
-  "Tower Hall Theater Foundation",
-  "Water Resources Board",
-  "Welfare Benefits Board"
-];
 
 export default function ComplaintDetail() {
   const router = useRouter();
@@ -139,7 +20,6 @@ export default function ComplaintDetail() {
   const [responses, setResponses] = useState<any[]>([]);
   const [auditTrail, setAuditTrail] = useState<any[]>([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [showDepartmentModal, setShowDepartmentModal] = useState(false);
   
   // Modal states
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -155,7 +35,6 @@ export default function ComplaintDetail() {
   const [newResponse, setNewResponse] = useState('');
   const [message, setMessage] = useState('');
 
-  // Check authentication
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (!storedUser) {
@@ -163,9 +42,8 @@ export default function ComplaintDetail() {
       return;
     }
     setUser(JSON.parse(storedUser));
-  }, []);
+  }, [router]);
 
-  // Load complaint data
   useEffect(() => {
     const complaintId = params.id;
     const found = mockComplaints.find(c => c.id === complaintId);
@@ -173,21 +51,13 @@ export default function ComplaintDetail() {
       setComplaint(found);
       setSelectedDepartment(found.department || '');
     }
-
-    // Load related data
     setInternalNotes(mockInternalNotes.filter(n => n.complaintId === complaintId));
     setResponses(mockResponses.filter(r => r.complaintId === complaintId));
     setAuditTrail(mockAuditTrail.filter(a => a.complaintId === complaintId));
   }, [params.id]);
 
-  // Handle update status
   const handleUpdateStatus = () => {
-    if (!newStatus) {
-      setMessage('Please select a status');
-      return;
-    }
-
-    // Create audit entry
+    if (!newStatus) return;
     const newAudit = {
       id: `audit_${Date.now()}`,
       complaintId: complaint.id,
@@ -197,23 +67,15 @@ export default function ComplaintDetail() {
       timestamp: new Date().toISOString(),
       details: { oldStatus: complaint.status, newStatus, reason: statusReason }
     };
-
     setAuditTrail([newAudit, ...auditTrail]);
     setComplaint({ ...complaint, status: newStatus });
     setShowStatusModal(false);
-    setNewStatus('');
-    setStatusReason('');
     setMessage('Status updated successfully!');
     setTimeout(() => setMessage(''), 3000);
   };
 
-  // Handle add note
   const handleAddNote = () => {
-    if (!newNote.trim()) {
-      setMessage('Please enter a note');
-      return;
-    }
-
+    if (!newNote.trim()) return;
     const note = {
       id: `note_${Date.now()}`,
       complaintId: complaint.id,
@@ -223,7 +85,6 @@ export default function ComplaintDetail() {
       createdAt: new Date().toISOString(),
       isPrivate: isPrivateNote
     };
-
     setInternalNotes([note, ...internalNotes]);
     setShowNoteModal(false);
     setNewNote('');
@@ -231,13 +92,8 @@ export default function ComplaintDetail() {
     setTimeout(() => setMessage(''), 3000);
   };
 
-  // Handle add response
   const handleAddResponse = () => {
-    if (!newResponse.trim()) {
-      setMessage('Please enter a response');
-      return;
-    }
-
+    if (!newResponse.trim()) return;
     const response = {
       id: `res_${Date.now()}`,
       complaintId: complaint.id,
@@ -247,7 +103,6 @@ export default function ComplaintDetail() {
       createdAt: new Date().toISOString(),
       isFromCitizen: false
     };
-
     setResponses([response, ...responses]);
     setShowResponseModal(false);
     setNewResponse('');
@@ -255,14 +110,8 @@ export default function ComplaintDetail() {
     setTimeout(() => setMessage(''), 3000);
   };
 
-  // Handle forward to another department
   const handleForwardDepartment = () => {
-    if (!selectedDepartment) {
-      setMessage('Please select a department');
-      return;
-    }
-
-    // Create audit entry for forwarding
+    if (!selectedDepartment) return;
     const newAudit = {
       id: `audit_${Date.now()}`,
       complaintId: complaint.id,
@@ -272,805 +121,282 @@ export default function ComplaintDetail() {
       timestamp: new Date().toISOString(),
       details: { fromDepartment: complaint.department, toDepartment: selectedDepartment }
     };
-
     setAuditTrail([newAudit, ...auditTrail]);
-    setComplaint({ ...complaint, department: selectedDepartment, departmentId: `dept_${selectedDepartment.substring(0, 3)}` });
+    setComplaint({ ...complaint, department: selectedDepartment });
     setShowForwardModal(false);
     setMessage(`Complaint forwarded to ${selectedDepartment}`);
     setTimeout(() => setMessage(''), 3000);
   };
 
-  // Handle request more info
-  const handleRequestInfo = () => {
-    setShowResponseModal(true);
-    setNewResponse('We need more information to process this complaint. Please provide additional details.');
-  };
-
-  const getStatusBadgeClass = (status: string) => {
-    const classes = {
-      'pending': 'badge-pending',
-      'assigned': 'badge-assigned',
-      'in-progress': 'badge-in-progress',
-      'resolved': 'badge-resolved',
-      'rejected': 'badge-rejected'
-    };
-    return `badge ${classes[status as keyof typeof classes] || ''}`;
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors = {
-      'pending': '#ff9800',
-      'assigned': '#2196f3',
-      'in-progress': '#9c27b0',
-      'resolved': '#4caf50',
-      'rejected': '#f44336'
-    };
-    return colors[status as keyof typeof colors] || '#666';
-  };
-
-  if (!complaint || !user) {
-    return <div className="container">Loading...</div>;
-  }
-
-  // Format date like "Oct 24, 2023 • 09:42 AM"
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    }) + ' • ' + date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true 
-    });
-  };
+  if (!complaint || !user) return <div style={{ padding: '40px' }}>Loading...</div>;
 
   return (
-    <div style={{ backgroundColor: '#f5f7fa', minHeight: '100vh', fontFamily: 'Arial, sans-serif' }}>
-      {/* Simple Header */}
-      <div style={{ 
-        backgroundColor: 'white', 
-        borderBottom: '1px solid #e0e0e0',
-        padding: '15px 30px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <h2 style={{ margin: 0, color: '#1976d2', fontSize: '20px' }}>GovConnect</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <span style={{ color: '#555' }}>{user.name} | {user.department}</span>
+    <div style={{ 
+      display: 'flex', 
+      minHeight: '100vh', 
+      backgroundColor: '#f8fafc', 
+      fontFamily: 'Inter, system-ui, sans-serif',
+      backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.94)), url("/sl-admin-bg.jpg")',
+      backgroundSize: 'cover',
+      backgroundAttachment: 'fixed',
+      backgroundPosition: 'center'
+    }}>
+      {/* Sidebar - Same as Dashboard */}
+      <div style={{ width: '260px', backgroundColor: '#8d153a', color: 'white', padding: '25px 0', position: 'fixed', height: '100vh', boxShadow: '4px 0 10px rgba(0,0,0,0.1)' }}>
+        <div style={{ padding: '0 25px 30px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <h2 style={{ fontSize: '22px', margin: 0, color: '#ffbe29' }}>GovConnect</h2>
+          <p style={{ fontSize: '12px', margin: '5px 0 0', opacity: 0.8, color: '#eb7400', fontWeight: 'bold' }}>AUTHORITY PORTAL</p>
+        </div>
+        <div style={{ marginTop: '20px' }}>
+          <div onClick={() => router.push('/dashboard')} style={{ padding: '12px 25px', cursor: 'pointer', transition: '0.2s' }}>
+            Dashboard Overview
+          </div>
+          <div style={{ padding: '12px 25px', backgroundColor: '#00534e', borderLeft: '4px solid #ffbe29', cursor: 'pointer' }}>
+            Case Investigation
+          </div>
+        </div>
+        <div style={{ position: 'absolute', bottom: '20px', width: '260px', padding: '0 25px' }}>
           <button 
-            onClick={() => router.push('/dashboard')}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#f0f0f0',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
+            onClick={() => { localStorage.removeItem('user'); router.push('/login'); }}
+            style={{ width: '100%', padding: '10px', backgroundColor: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}
           >
-            ← Back
+            Logout
           </button>
         </div>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '30px 20px' }}>
-        {/* Message display */}
+      <div style={{ flex: 1, padding: '40px', marginLeft: '260px' }}>
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+          <div>
+            <button 
+              onClick={() => router.push('/dashboard')}
+              style={{ background: 'none', border: 'none', color: '#8d153a', fontWeight: '700', cursor: 'pointer', marginBottom: '10px', padding: 0 }}
+            >
+              ← BACK TO CASE LIST
+            </button>
+            <h1 style={{ fontSize: '28px', margin: 0, color: '#8d153a', fontWeight: '800' }}>CASE ID: {complaint.id}</h1>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <span style={{ 
+              backgroundColor: complaint.status === 'pending' ? '#eb740015' : complaint.status === 'resolved' ? '#4caf50' : '#00534e',
+              color: complaint.status === 'resolved' ? 'white' : complaint.status === 'pending' ? '#eb7400' : 'white',
+              padding: '8px 20px',
+              borderRadius: '8px',
+              fontWeight: '800',
+              fontSize: '14px',
+              textTransform: 'uppercase'
+            }}>
+              {complaint.status}
+            </span>
+          </div>
+        </header>
+
         {message && (
-          <div style={{ 
-            backgroundColor: '#e8f5e8', 
-            color: '#2e7d32', 
-            padding: '12px 20px',
-            borderRadius: '4px',
-            marginBottom: '20px',
-            border: '1px solid #c8e6c9'
-          }}>
-            {message}
+          <div style={{ backgroundColor: '#00534e', color: 'white', padding: '15px 25px', borderRadius: '12px', marginBottom: '25px', fontWeight: '600', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+            ✓ {message}
           </div>
         )}
 
-        {/* Case ID and Date */}
-        <div style={{ marginBottom: '25px' }}>
-          <h1 style={{ fontSize: '28px', margin: '0 0 5px 0', color: '#333' }}>
-            CASE ID: {complaint.id}
-          </h1>
-          <p style={{ color: '#666', margin: 0, fontSize: '15px' }}>
-            Filed: {formatDate(complaint.createdAt)}
-          </p>
-        </div>
-
-        {/* Main Content Grid - 2 columns */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '25px' }}>
-          {/* Left Column - Main Content */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '30px' }}>
+          {/* Main Content */}
           <div>
-            {/* Complaint Description Card */}
-            <div style={{ 
-              backgroundColor: 'white', 
-              borderRadius: '8px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              padding: '25px',
-              marginBottom: '25px'
-            }}>
-              <h2 style={{ 
-                fontSize: '18px', 
-                margin: '0 0 15px 0', 
-                color: '#555',
-                borderBottom: '1px solid #eee',
-                paddingBottom: '10px'
-              }}>
+            <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid #ffbe29', marginBottom: '30px' }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#8d153a', fontSize: '16px', fontWeight: '800', borderBottom: '2px solid #fdf4f6', paddingBottom: '10px' }}>
                 COMPLAINT DESCRIPTION
-              </h2>
-              <p style={{ lineHeight: '1.6', color: '#333', margin: 0 }}>
-                {complaint.description}
-              </p>
+              </h3>
+              <p style={{ lineHeight: '1.8', color: '#1e293b', fontSize: '16px', margin: 0 }}>{complaint.description}</p>
             </div>
 
-            {/* Location Hierarchy Card */}
-            <div style={{ 
-              backgroundColor: 'white', 
-              borderRadius: '8px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              padding: '25px',
-              marginBottom: '25px'
-            }}>
-              <h2 style={{ 
-                fontSize: '18px', 
-                margin: '0 0 15px 0', 
-                color: '#555',
-                borderBottom: '1px solid #eee',
-                paddingBottom: '10px'
-              }}>
-                LOCATION HIERARCHY
-              </h2>
-              <div style={{ marginLeft: '10px' }}>
-                <div style={{ marginBottom: '15px' }}>
-                  <div style={{ fontWeight: 'bold', color: '#666', marginBottom: '5px' }}>PROVINCE</div>
-                  <div style={{ color: '#333' }}>Western Province</div>
+            <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid #00534e', marginBottom: '30px' }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#00534e', fontSize: '16px', fontWeight: '800', borderBottom: '2px solid #f0f8f7', paddingBottom: '10px' }}>
+                LOGISTICS & LOCATION
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+                <div>
+                  <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800' }}>PROVINCE</div>
+                  <div style={{ fontWeight: '700', color: '#1e293b' }}>Western Province</div>
                 </div>
-                <div style={{ marginBottom: '15px' }}>
-                  <div style={{ fontWeight: 'bold', color: '#666', marginBottom: '5px' }}>DISTRICT</div>
-                  <div style={{ color: '#333' }}>Colombo District</div>
+                <div>
+                  <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800' }}>DISTRICT</div>
+                  <div style={{ fontWeight: '700', color: '#1e293b' }}>Colombo District</div>
                 </div>
-                <div style={{ marginBottom: '15px' }}>
-                  <div style={{ fontWeight: 'bold', color: '#666', marginBottom: '5px' }}>DIVISION</div>
-                  <div style={{ color: '#333' }}>Kaduwela - 122C</div>
+                <div>
+                  <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800' }}>DIVISION</div>
+                  <div style={{ fontWeight: '700', color: '#1e293b' }}>Kaduwela - 122C</div>
                 </div>
               </div>
             </div>
 
-            {/* Targeted Authority Card */}
-            <div style={{ 
-              backgroundColor: 'white', 
-              borderRadius: '8px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              padding: '25px'
-            }}>
-              <h2 style={{ 
-                fontSize: '18px', 
-                margin: '0 0 15px 0', 
-                color: '#555',
-                borderBottom: '1px solid #eee',
-                paddingBottom: '10px'
-              }}>
-                TARGETED AUTHORITY
-              </h2>
-              <div style={{ fontSize: '16px', color: '#333' }}>
-                <span style={{ fontWeight: 'bold' }}>Director S. Kumara</span>
-                <br />
-                <span style={{ color: '#666' }}>Municipal Waste Management Dept.</span>
+            <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid #eb7400' }}>
+              <div style={{ display: 'flex', borderBottom: '2px solid #f1f5f9' }}>
+                <button 
+                  onClick={() => setActiveTab('notes')}
+                  style={{ padding: '15px 25px', cursor: 'pointer', background: 'none', border: 'none', borderBottom: activeTab === 'notes' ? '3px solid #8d153a' : 'none', color: activeTab === 'notes' ? '#8d153a' : '#64748b', fontWeight: '800', fontSize: '14px' }}
+                >
+                  INTERNAL NOTES ({internalNotes.length})
+                </button>
+                <button 
+                  onClick={() => setActiveTab('responses')}
+                  style={{ padding: '15px 25px', cursor: 'pointer', background: 'none', border: 'none', borderBottom: activeTab === 'responses' ? '3px solid #8d153a' : 'none', color: activeTab === 'responses' ? '#8d153a' : '#64748b', fontWeight: '800', fontSize: '14px' }}
+                >
+                  CITIZEN RESPONSES ({responses.length})
+                </button>
+                <button 
+                  onClick={() => setActiveTab('audit')}
+                  style={{ padding: '15px 25px', cursor: 'pointer', background: 'none', border: 'none', borderBottom: activeTab === 'audit' ? '3px solid #8d153a' : 'none', color: activeTab === 'audit' ? '#8d153a' : '#64748b', fontWeight: '800', fontSize: '14px' }}
+                >
+                  AUDIT LOG
+                </button>
+              </div>
+
+              <div style={{ paddingTop: '20px' }}>
+                {activeTab === 'notes' && (
+                  <div>
+                    <button onClick={() => setShowNoteModal(true)} style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '8px', border: '2px dashed #8d153a', background: '#fdf4f6', color: '#8d153a', fontWeight: '700', cursor: 'pointer' }}>
+                      + APPEND NEW CASE NOTE
+                    </button>
+                    {internalNotes.map(note => (
+                      <div key={note.id} style={{ padding: '18px', backgroundColor: '#f8fafc', borderRadius: '12px', marginBottom: '12px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <span style={{ fontWeight: '800', fontSize: '13px', color: '#8d153a' }}>{note.createdByName}</span>
+                          <span style={{ fontSize: '11px', color: '#94a3b8' }}>{new Date(note.createdAt).toLocaleString()}</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '15px', color: '#1e293b' }}>{note.note}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {activeTab === 'responses' && (
+                  <div>
+                    <button onClick={() => setShowResponseModal(true)} style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '8px', border: '2px dashed #00534e', background: '#f0f8f7', color: '#00534e', fontWeight: '700', cursor: 'pointer' }}>
+                      + SEND RESPONSE TO CITIZEN
+                    </button>
+                    {responses.map(res => (
+                      <div key={res.id} style={{ padding: '18px', backgroundColor: res.isFromCitizen ? '#fff' : '#f0f8f7', borderRadius: '12px', marginBottom: '12px', border: res.isFromCitizen ? '1px solid #e2e8f0' : '1px solid #00534e30' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <span style={{ fontWeight: '800', fontSize: '13px', color: res.isFromCitizen ? '#eb7400' : '#00534e' }}>{res.isFromCitizen ? '👤 CITIZEN' : '👮 OFFICIAL RESPONSE'}</span>
+                          <span style={{ fontSize: '11px', color: '#94a3b8' }}>{new Date(res.createdAt).toLocaleString()}</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '15px', color: '#1e293b' }}>{res.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {activeTab === 'audit' && (
+                  <div>
+                    {auditTrail.map(entry => (
+                      <div key={entry.id} style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
+                        <div style={{ minWidth: '80px', fontSize: '11px', color: '#94a3b8', fontWeight: '700', paddingTop: '4px' }}>{new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                        <div style={{ flex: 1, padding: '10px 15px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '4px solid #8d153a' }}>
+                          <div style={{ fontWeight: '700', fontSize: '13px', color: '#1e293b' }}>{entry.action.replace('_', ' ')}</div>
+                          <div style={{ fontSize: '12px', color: '#64748b' }}>BY: {entry.performedByName}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Right Column - Sidebar */}
+          {/* Right Sidebar */}
           <div>
-            {/* Status Card */}
-            <div style={{ 
-              backgroundColor: 'white', 
-              borderRadius: '8px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              padding: '20px',
-              marginBottom: '25px'
-            }}>
-              <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: '#555' }}>CASE STATUS</h3>
-              <div style={{ 
-                backgroundColor: getStatusColor(complaint.status),
-                color: 'white',
-                padding: '8px 12px',
-                borderRadius: '4px',
-                fontWeight: 'bold',
-                textTransform: 'uppercase',
-                fontSize: '14px',
-                textAlign: 'center',
-                marginBottom: '15px'
-              }}>
-                {complaint.status}
-              </div>
-              <button
+            <div style={{ backgroundColor: '#8d153a', padding: '25px', borderRadius: '16px', color: 'white', marginBottom: '25px', boxShadow: '0 8px 16px rgba(141, 21, 58, 0.2)' }}>
+              <h4 style={{ margin: '0 0 15px 0', fontSize: '14px', letterSpacing: '1px', opacity: 0.8 }}>CASE STATUS CONTROL</h4>
+              <button 
                 onClick={() => setShowStatusModal(true)}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  backgroundColor: '#1976d2',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold'
-                }}
+                style={{ width: '100%', padding: '12px', backgroundColor: 'white', color: '#8d153a', border: 'none', borderRadius: '8px', fontWeight: '800', cursor: 'pointer', marginBottom: '12px' }}
               >
-                UPDATE STATUS
+                UPDATE CURRENT STATUS
               </button>
-            </div>
-
-            {/* Evidence Vault Card */}
-            <div style={{ 
-              backgroundColor: 'white', 
-              borderRadius: '8px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              padding: '20px',
-              marginBottom: '25px'
-            }}>
-              <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: '#555' }}>EVIDENCE VAULT</h3>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={() => setShowForwardModal(true)}
-                  style={{
-                    flex: 1,
-                    padding: '10px',
-                    backgroundColor: '#f0f0f0',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold',
-                    color: '#333'
-                  }}
-                >
-                  FORWARD
-                </button>
-                <button
-                  onClick={handleRequestInfo}
-                  style={{
-                    flex: 1,
-                    padding: '10px',
-                    backgroundColor: '#f0f0f0',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold',
-                    color: '#333'
-                  }}
-                >
-                  REQUEST INFO
-                </button>
-              </div>
-            </div>
-
-            {/* Resolve & Close Card */}
-            <div style={{ 
-              backgroundColor: 'white', 
-              borderRadius: '8px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              padding: '20px',
-              marginBottom: '25px'
-            }}>
-              <button
-                onClick={() => {
-                  setNewStatus('resolved');
-                  setShowStatusModal(true);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '15px',
-                  backgroundColor: '#4caf50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: '16px'
-                }}
+              <button 
+                onClick={() => { setShowStatusModal(true); setNewStatus('resolved'); }}
+                style={{ width: '100%', padding: '12px', backgroundColor: '#ffbe29', color: '#8d153a', border: 'none', borderRadius: '8px', fontWeight: '800', cursor: 'pointer' }}
               >
                 RESOLVE & CLOSE CASE
               </button>
             </div>
 
-            {/* Tabs for Notes and Responses */}
-            <div style={{ marginTop: '25px' }}>
-              <div style={{ display: 'flex', borderBottom: '1px solid #ddd' }}>
-                <button
-                  style={{
-                    padding: '10px 15px',
-                    border: 'none',
-                    background: 'none',
-                    borderBottom: activeTab === 'notes' ? '2px solid #1976d2' : 'none',
-                    cursor: 'pointer',
-                    fontWeight: activeTab === 'notes' ? 'bold' : 'normal'
-                  }}
-                  onClick={() => setActiveTab('notes')}
-                >
-                  Internal Notes ({internalNotes.length})
-                </button>
-                <button
-                  style={{
-                    padding: '10px 15px',
-                    border: 'none',
-                    background: 'none',
-                    borderBottom: activeTab === 'responses' ? '2px solid #1976d2' : 'none',
-                    cursor: 'pointer',
-                    fontWeight: activeTab === 'responses' ? 'bold' : 'normal'
-                  }}
-                  onClick={() => setActiveTab('responses')}
-                >
-                  Responses ({responses.length})
-                </button>
-                <button
-                  style={{
-                    padding: '10px 15px',
-                    border: 'none',
-                    background: 'none',
-                    borderBottom: activeTab === 'audit' ? '2px solid #1976d2' : 'none',
-                    cursor: 'pointer',
-                    fontWeight: activeTab === 'audit' ? 'bold' : 'normal'
-                  }}
-                  onClick={() => setActiveTab('audit')}
-                >
-                  Audit Trail
-                </button>
-              </div>
+            <div style={{ backgroundColor: 'white', padding: '25px', borderRadius: '16px', border: '1px solid #eb7400', marginBottom: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
+              <h4 style={{ margin: '0 0 15px 0', color: '#64748b', fontSize: '13px', fontWeight: '800' }}>CASE TRANSFERS</h4>
+              <button 
+                onClick={() => setShowForwardModal(true)}
+                style={{ width: '100%', padding: '12px', backgroundColor: '#eb7400', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '800', cursor: 'pointer' }}
+              >
+                FORWARD TO DEPT
+              </button>
+            </div>
 
-              <div style={{ marginTop: '15px' }}>
-                {/* Notes Tab */}
-                {activeTab === 'notes' && (
-                  <div>
-                    <button 
-                      onClick={() => setShowNoteModal(true)}
-                      style={{
-                        padding: '8px 12px',
-                        backgroundColor: '#1976d2',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        marginBottom: '15px'
-                      }}
-                    >
-                      + Add Note
-                    </button>
-                    
-                    {internalNotes.length === 0 ? (
-                      <p style={{ color: '#666' }}>No internal notes yet.</p>
-                    ) : (
-                      internalNotes.map(note => (
-                        <div key={note.id} style={{ 
-                          padding: '12px',
-                          backgroundColor: '#f9f9f9',
-                          borderRadius: '4px',
-                          marginBottom: '10px',
-                          border: '1px solid #eee'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <strong>{note.createdByName}</strong>
-                            <small style={{ color: '#888' }}>{new Date(note.createdAt).toLocaleString()}</small>
-                          </div>
-                          <p style={{ margin: 0 }}>{note.note}</p>
-                          {note.isPrivate && (
-                            <span style={{ 
-                              backgroundColor: '#ffd700', 
-                              padding: '2px 6px',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              marginTop: '8px',
-                              display: 'inline-block'
-                            }}>
-                              🔒 Private
-                            </span>
-                          )}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {/* Responses Tab */}
-                {activeTab === 'responses' && (
-                  <div>
-                    <button 
-                      onClick={() => setShowResponseModal(true)}
-                      style={{
-                        padding: '8px 12px',
-                        backgroundColor: '#1976d2',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        marginBottom: '15px'
-                      }}
-                    >
-                      + Respond
-                    </button>
-                    
-                    {responses.length === 0 ? (
-                      <p style={{ color: '#666' }}>No responses yet.</p>
-                    ) : (
-                      responses.map(response => (
-                        <div key={response.id} style={{ 
-                          padding: '12px',
-                          backgroundColor: response.isFromCitizen ? '#f5f5f5' : '#e3f2fd',
-                          borderRadius: '4px',
-                          marginBottom: '10px',
-                          border: response.isFromCitizen ? '1px solid #ddd' : '1px solid #bbdefb'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <strong>
-                              {response.isFromCitizen ? '👤 Citizen' : '👮 ' + response.createdByName}
-                            </strong>
-                            <small style={{ color: '#888' }}>{new Date(response.createdAt).toLocaleString()}</small>
-                          </div>
-                          <p style={{ margin: 0 }}>{response.message}</p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {/* Audit Trail Tab */}
-                {activeTab === 'audit' && (
-                  <div>
-                    {auditTrail.length === 0 ? (
-                      <p style={{ color: '#666' }}>No audit trail entries yet.</p>
-                    ) : (
-                      auditTrail.map(entry => (
-                        <div key={entry.id} style={{ 
-                          padding: '12px',
-                          backgroundColor: '#f9f9f9',
-                          borderRadius: '4px',
-                          marginBottom: '10px',
-                          border: '1px solid #eee'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <strong>{entry.action}</strong>
-                            <small style={{ color: '#888' }}>{new Date(entry.timestamp).toLocaleString()}</small>
-                          </div>
-                          <p style={{ margin: '0 0 5px 0' }}>By: {entry.performedByName}</p>
-                          <pre style={{ 
-                            fontSize: '12px', 
-                            backgroundColor: '#f0f0f0', 
-                            padding: '8px', 
-                            borderRadius: '4px',
-                            margin: 0,
-                            whiteSpace: 'pre-wrap'
-                          }}>
-                            {JSON.stringify(entry.details, null, 2)}
-                          </pre>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
+            <div style={{ backgroundColor: '#00534e', padding: '25px', borderRadius: '16px', color: 'white', boxShadow: '0 8px 16px rgba(0, 83, 78, 0.2)' }}>
+              <h4 style={{ margin: '0 0 15px 0', fontSize: '14px', letterSpacing: '1px', opacity: 0.8 }}>INFORMATION REQUEST</h4>
+              <p style={{ fontSize: '12px', marginBottom: '15px', lineHeight: '1.5' }}>Send a formal request for more evidence or clarification from the citizen.</p>
+              <button 
+                onClick={() => { setShowResponseModal(true); setNewResponse('We need more information regarding your complaint...'); }}
+                style={{ width: '100%', padding: '12px', backgroundColor: 'white', color: '#00534e', border: 'none', borderRadius: '8px', fontWeight: '800', cursor: 'pointer' }}
+              >
+                REQUEST MORE INFO
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Update Status Modal */}
-      {showStatusModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ 
-            backgroundColor: 'white', 
-            padding: '25px', 
-            borderRadius: '8px',
-            width: '450px',
-            maxWidth: '90%'
-          }}>
-            <h3 style={{ margin: '0 0 20px 0' }}>Update Case Status</h3>
-            
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>New Status</label>
-              <select 
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px'
-                }}
-                value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value)}
-              >
-                <option value="">Select status</option>
-                <option value="pending">Pending</option>
-                <option value="assigned">Assigned</option>
-                <option value="in-progress">In Progress</option>
-                <option value="resolved">Resolved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Reason (optional)</label>
-              <textarea
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  minHeight: '80px'
-                }}
-                value={statusReason}
-                onChange={(e) => setStatusReason(e.target.value)}
-                placeholder="Why are you changing the status?"
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button 
-                onClick={() => setShowStatusModal(false)}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#f0f0f0',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleUpdateStatus}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#1976d2',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Update Status
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Forward Modal with Department List */}
-      {showForwardModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ 
-            backgroundColor: 'white', 
-            padding: '25px', 
-            borderRadius: '8px',
-            width: '600px',
-            maxWidth: '90%',
-            maxHeight: '80vh',
-            overflow: 'auto'
-          }}>
-            <h3 style={{ margin: '0 0 20px 0' }}>Forward Case to Department</h3>
-            
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Select Department</label>
-              <select
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: '14px'
-                }}
-                value={selectedDepartment}
-                onChange={(e) => setSelectedDepartment(e.target.value)}
-                size={10}
-              >
-                {governmentDepartments.map(dept => (
-                  <option key={dept} value={dept} style={{ padding: '5px' }}>
-                    {dept}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button 
-                onClick={() => setShowForwardModal(false)}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#f0f0f0',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleForwardDepartment}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#1976d2',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Forward Case
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Note Modal */}
-      {showNoteModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ 
-            backgroundColor: 'white', 
-            padding: '25px', 
-            borderRadius: '8px',
-            width: '450px',
-            maxWidth: '90%'
-          }}>
-            <h3 style={{ margin: '0 0 20px 0' }}>Add Internal Note</h3>
-            
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Note</label>
-              <textarea
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  minHeight: '100px'
-                }}
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Enter your note here..."
-              />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <input
-                  type="checkbox"
-                  checked={isPrivateNote}
-                  onChange={(e) => setIsPrivateNote(e.target.checked)}
-                />
-                Private note (visible only to authorities)
-              </label>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button 
-                onClick={() => setShowNoteModal(false)}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#f0f0f0',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleAddNote}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#1976d2',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Add Note
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Response Modal */}
-      {showResponseModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{ 
-            backgroundColor: 'white', 
-            padding: '25px', 
-            borderRadius: '8px',
-            width: '450px',
-            maxWidth: '90%'
-          }}>
-            <h3 style={{ margin: '0 0 20px 0' }}>Respond to Citizen</h3>
-            
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Your Response</label>
-              <textarea
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  minHeight: '120px'
-                }}
-                value={newResponse}
-                onChange={(e) => setNewResponse(e.target.value)}
-                placeholder="Type your response to the citizen..."
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button 
-                onClick={() => setShowResponseModal(false)}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#f0f0f0',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleAddResponse}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#1976d2',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Send Response
-              </button>
-            </div>
+      {/* Shared Modal Styling */}
+      {(showStatusModal || showNoteModal || showResponseModal || showForwardModal) && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ backgroundColor: 'white', padding: '35px', borderRadius: '16px', width: '480px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', borderTop: '8px solid #8d153a' }}>
+            {showStatusModal && (
+              <>
+                <h2 style={{ color: '#8d153a', marginBottom: '20px' }}>UPDATE STATUS</h2>
+                <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', marginBottom: '20px' }}>
+                  <option value="">Select Target Status...</option>
+                  <option value="pending">Pending</option>
+                  <option value="assigned">Assigned</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="resolved">Resolved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={() => setShowStatusModal(false)} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}>CANCEL</button>
+                  <button onClick={handleUpdateStatus} style={{ flex: 2, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#8d153a', color: 'white', fontWeight: '700' }}>UPDATE</button>
+                </div>
+              </>
+            )}
+            {showForwardModal && (
+              <>
+                <h2 style={{ color: '#8d153a', marginBottom: '20px' }}>FORWARD CASE</h2>
+                <select value={selectedDepartment} onChange={(e) => setSelectedDepartment(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', marginBottom: '20px' }}>
+                  <option value="">Select Destination Ministry...</option>
+                  {governmentDepartments.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={() => setShowForwardModal(false)} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}>CANCEL</button>
+                  <button onClick={handleForwardDepartment} style={{ flex: 2, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#8d153a', color: 'white', fontWeight: '700' }}>TRANSFER</button>
+                </div>
+              </>
+            )}
+            {showNoteModal && (
+              <>
+                <h2 style={{ color: '#8d153a', marginBottom: '20px' }}>ADD CASE NOTE</h2>
+                <textarea value={newNote} onChange={(e) => setNewNote(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', height: '120px', marginBottom: '20px' }} placeholder="Enter internal note details..." />
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={() => setShowNoteModal(false)} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}>CANCEL</button>
+                  <button onClick={handleAddNote} style={{ flex: 2, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#8d153a', color: 'white', fontWeight: '700' }}>SAVE NOTE</button>
+                </div>
+              </>
+            )}
+            {showResponseModal && (
+              <>
+                <h2 style={{ color: '#00534e', marginBottom: '20px' }}>SEND RESPONSE</h2>
+                <textarea value={newResponse} onChange={(e) => setNewResponse(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', height: '120px', marginBottom: '20px' }} placeholder="Message to citizen..." />
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={() => setShowResponseModal(false)} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}>CANCEL</button>
+                  <button onClick={handleAddResponse} style={{ flex: 2, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#00534e', color: 'white', fontWeight: '700' }}>SEND MESSAGE</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

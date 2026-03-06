@@ -20,7 +20,13 @@ export default function LoginPage() {
       // Store user data (don't store password!)
       const { password, ...userWithoutPassword } = user;
       localStorage.setItem('user', JSON.stringify(userWithoutPassword));
-      router.push('/dashboard');
+      
+      // Redirect based on user type
+      if (user.userType === 'admin') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
     } else {
       setError('Invalid email or password');
     }
@@ -160,6 +166,7 @@ export default function LoginPage() {
           <p style={{ margin: '5px 0' }}>👮 <strong>Police Department:</strong> nadeeka@police.gov.lk / password123</p>
           <p style={{ margin: '5px 0' }}>💧 <strong>Water Board:</strong> ruwan@waterboard.gov.lk / password123</p>
           <p style={{ margin: '5px 0' }}>⚡ <strong>Electricity Board:</strong> malini@ceb.gov.lk / password123</p>
+          <p style={{ margin: '10px 0 5px 0', borderTop: '1px solid #ddd', paddingTop: '10px' }}>🔐 <strong>System Admin:</strong> admin@govconnect.lk / adminpassword</p>
         </div>
       </div>
     </div>

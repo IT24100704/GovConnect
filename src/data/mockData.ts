@@ -158,6 +158,67 @@ export const mockUsers = [
     department: "Electricity Board",
     departmentId: "dept_004",
     role: "Complaint Officer"
+  },
+  {
+    id: "admin_001",
+    name: "System Administrator",
+    email: "admin@govconnect.lk",
+    password: "adminpassword",
+    userType: "admin",
+    role: "Super Admin"
+  }
+];
+
+export const sriLankaGeography = [
+  {
+    id: "prov_1",
+    name: "Western Province",
+    districts: [
+      {
+        id: "dist_1",
+        name: "Colombo",
+        dsDivisions: [
+          {
+            id: "ds_1",
+            name: "Kaduwela",
+            gsDivisions: ["Kaduwela South", "Kaduwela North", "Weliwita", "Hewagama"]
+          },
+          {
+            id: "ds_2",
+            name: "Maharagama",
+            gsDivisions: ["Maharagama Town", "Nawinna", "Watthegedara", "Egodawatta"]
+          }
+        ]
+      },
+      {
+        id: "dist_2",
+        name: "Gampaha",
+        dsDivisions: [
+          {
+            id: "ds_3",
+            name: "Negombo",
+            gsDivisions: ["Negombo Town", "Daluwakotuwa", "Katuwapitiya"]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: "prov_2",
+    name: "Central Province",
+    districts: [
+      {
+        id: "dist_3",
+        name: "Kandy",
+        dsDivisions: [
+          {
+            id: "ds_4",
+            name: "Kandy Five Gravets",
+            gsDivisions: ["Kandy Town", "Peradeniya", "Katugastota"]
+          }
+        ]
+      }
+    ]
   }
 ];
 
@@ -178,6 +239,38 @@ export const mockComplaints = [
     departmentId: "dept_001",
     department: "Municipal Council",
     location: "Main Street, Colombo",
+    attachments: []
+  },
+  {
+    id: "CMP010",
+    title: "Old building wall collapsed",
+    description: "Safety hazard near the bus stand. Resolved by clearing debris.",
+    category: "Safety",
+    status: "resolved",
+    priority: "high",
+    createdAt: "2024-02-10T11:00:00Z",
+    citizenId: "cit_001",
+    citizenName: "Nimal Silva",
+    citizenContact: "0771234567",
+    departmentId: "dept_001",
+    department: "Municipal Council",
+    location: "Pettah, Colombo",
+    attachments: []
+  },
+  {
+    id: "CMP011",
+    title: "Broken manhole cover",
+    description: "Successfully replaced near the public park.",
+    category: "Infrastructure",
+    status: "resolved",
+    priority: "medium",
+    createdAt: "2024-02-12T09:30:00Z",
+    citizenId: "cit_004",
+    citizenName: "Sunil Fernando",
+    citizenContact: "0789876543",
+    departmentId: "dept_001",
+    department: "Municipal Council",
+    location: "Viharamahadevi Park",
     attachments: []
   },
   {
