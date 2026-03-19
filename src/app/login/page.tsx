@@ -24,8 +24,6 @@ export default function LoginPage() {
         department: user.department,
         role: user.role,
         userType: user.userType,
-        phone: user.phone,
-        avatar: user.avatar,
       };
       localStorage.setItem('user', JSON.stringify(userWithoutPassword));
 

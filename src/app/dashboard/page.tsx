@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { mockComplaints } from '@/data/mockData';
+import { readDecisionLedger, type DecisionLedgerEntry } from '@/lib/decisionLedger';
 
 export default function AuthorityDashboard() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function AuthorityDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'assignments', 'resolved'
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [decisionLedger, setDecisionLedger] = useState<DecisionLedgerEntry[]>([]);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -24,6 +26,10 @@ export default function AuthorityDashboard() {
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
   }, [router]);
+
+  useEffect(() => {
+    setDecisionLedger(readDecisionLedger());
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -118,6 +124,14 @@ export default function AuthorityDashboard() {
 
   if (!user) return <div style={{ padding: '20px' }}>Loading...</div>;
 
+  const departmentDecisionLogs = decisionLedger.filter((entry) => (
+    entry.departmentId === user.departmentId || entry.department === user.department
+  ));
+  const recentDecisions = departmentDecisionLogs.slice(0, 5);
+  const approvals = departmentDecisionLogs.filter((entry) => entry.action === 'APPROVE').length;
+  const rejections = departmentDecisionLogs.filter((entry) => entry.action === 'REJECT').length;
+  const edits = departmentDecisionLogs.filter((entry) => entry.action === 'STATUS_EDIT' || entry.action === 'FIELD_EDIT').length;
+
   const stats = [
     { label: 'Pending', count: complaints.filter(c => c.departmentId === user.departmentId && c.status === 'pending').length, color: '#eb7400', icon: '⏳' },
     { label: 'In Progress', count: complaints.filter(c => c.departmentId === user.departmentId && c.status === 'in-progress').length, color: '#00534e', icon: '⚙️' },
@@ -183,6 +197,44 @@ export default function AuthorityDashboard() {
           >
             Resolved Cases
           </div>
+        </div>
+
+        <div style={{ marginTop: '30px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px' }}>
+          <div style={{ padding: '0 25px 10px', fontSize: '11px', color: '#ffbe29', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', opacity: 0.7 }}>
+            Tools & Analysis
+          </div>
+          <a 
+            href="/communication-hub"
+            style={{ 
+              display: 'block',
+              padding: '12px 25px', 
+              cursor: 'pointer', 
+              transition: '0.2s',
+              textDecoration: 'none',
+              color: 'white',
+              fontSize: '14px'
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#00534e50')}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            💬 Communication Hub
+          </a>
+          <a 
+            href="/analytics-dashboard"
+            style={{ 
+              display: 'block',
+              padding: '12px 25px', 
+              cursor: 'pointer', 
+              transition: '0.2s',
+              textDecoration: 'none',
+              color: 'white',
+              fontSize: '14px'
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#00534e50')}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            📈 Analytics
+          </a>
         </div>
 
         <div style={{ position: 'absolute', bottom: '20px', width: '260px', padding: '0 25px' }}>
@@ -367,6 +419,75 @@ export default function AuthorityDashboard() {
           ))}
         </div>
 
+        {/* Quick Access Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+          <a 
+            href="/communication-hub"
+            style={{ 
+              backgroundColor: 'white', 
+              padding: '20px', 
+              borderRadius: '12px', 
+              boxShadow: '0 4px 15px rgba(0,0,0,0.05)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '15px', 
+              borderBottom: '4px solid #00bcd4',
+              cursor: 'pointer', 
+              transition: '0.2s',
+              textDecoration: 'none'
+            }}
+            onMouseOver={(e) => {
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 25px rgba(0,188,212,0.15)';
+            }}
+            onMouseOut={(e) => {
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)';
+            }}
+          >
+            <div style={{ fontSize: '24px', backgroundColor: '#00bcd415', padding: '12px', borderRadius: '10px' }}>
+              💬
+            </div>
+            <div>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '13px', fontWeight: '600' }}>Communication</p>
+              <h3 style={{ margin: '3px 0 0', fontSize: '16px', color: '#00bcd4', fontWeight: '700' }}>Live Chat Hub</h3>
+            </div>
+          </a>
+
+          <a 
+            href="/analytics-dashboard"
+            style={{ 
+              backgroundColor: 'white', 
+              padding: '20px', 
+              borderRadius: '12px', 
+              boxShadow: '0 4px 15px rgba(0,0,0,0.05)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '15px', 
+              borderBottom: '4px solid #8bc34a',
+              cursor: 'pointer', 
+              transition: '0.2s',
+              textDecoration: 'none'
+            }}
+            onMouseOver={(e) => {
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 25px rgba(139,194,74,0.15)';
+            }}
+            onMouseOut={(e) => {
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)';
+            }}
+          >
+            <div style={{ fontSize: '24px', backgroundColor: '#8bc34a15', padding: '12px', borderRadius: '10px' }}>
+              📈
+            </div>
+            <div>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '13px', fontWeight: '600' }}>Insights & Metrics</p>
+              <h3 style={{ margin: '3px 0 0', fontSize: '16px', color: '#8bc34a', fontWeight: '700' }}>Analytics Dashboard</h3>
+            </div>
+          </a>
+        </div>
+
         {/* Complaints Table Section */}
         <div style={{ backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', border: '1px solid #ffbe29', overflow: 'hidden' }}>
           <div style={{ padding: '20px 25px', borderBottom: '2px solid #ffbe29', backgroundColor: '#fdf4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -465,6 +586,67 @@ export default function AuthorityDashboard() {
                     </tr>
                   )})
                 )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style={{ marginTop: '28px', backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', border: '1px solid #00534e', overflow: 'hidden' }}>
+          <div style={{ padding: '20px 25px', borderBottom: '2px solid #d1e9e7', backgroundColor: '#f0f8f7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, color: '#00534e', fontSize: '18px', fontWeight: '800' }}>DECISION LEDGER</h3>
+            <div style={{ color: '#334155', fontWeight: '700', fontSize: '12px' }}>Append-only accountability trail</div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px', padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
+            <div style={{ padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700' }}>TOTAL DECISIONS</div>
+              <div style={{ fontSize: '20px', color: '#0f172a', fontWeight: '800' }}>{departmentDecisionLogs.length}</div>
+            </div>
+            <div style={{ padding: '12px', borderRadius: '10px', border: '1px solid #d9f2df', backgroundColor: '#f2fbf4' }}>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700' }}>APPROVALS</div>
+              <div style={{ fontSize: '20px', color: '#166534', fontWeight: '800' }}>{approvals}</div>
+            </div>
+            <div style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ffe5e5', backgroundColor: '#fff7f7' }}>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700' }}>REJECTIONS</div>
+              <div style={{ fontSize: '20px', color: '#b91c1c', fontWeight: '800' }}>{rejections}</div>
+            </div>
+            <div style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ffefcf', backgroundColor: '#fffaf0' }}>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700' }}>STATUS/FIELD EDITS</div>
+              <div style={{ fontSize: '20px', color: '#92400e', fontWeight: '800' }}>{edits}</div>
+            </div>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead style={{ backgroundColor: '#f8fafc' }}>
+                <tr>
+                  <th style={{ padding: '14px 20px', color: '#64748b', fontWeight: '700', fontSize: '12px' }}>WHEN</th>
+                  <th style={{ padding: '14px 20px', color: '#64748b', fontWeight: '700', fontSize: '12px' }}>OFFICER</th>
+                  <th style={{ padding: '14px 20px', color: '#64748b', fontWeight: '700', fontSize: '12px' }}>CASE</th>
+                  <th style={{ padding: '14px 20px', color: '#64748b', fontWeight: '700', fontSize: '12px' }}>ACTION</th>
+                  <th style={{ padding: '14px 20px', color: '#64748b', fontWeight: '700', fontSize: '12px' }}>CHANGE</th>
+                  <th style={{ padding: '14px 20px', color: '#64748b', fontWeight: '700', fontSize: '12px' }}>REASON</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentDecisions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ padding: '24px 20px', textAlign: 'center', color: '#64748b' }}>
+                      No decision entries available for your department yet.
+                    </td>
+                  </tr>
+                ) : recentDecisions.map((entry) => (
+                  <tr key={entry.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '14px 20px', color: '#334155', fontWeight: '600', fontSize: '12px' }}>
+                      {new Date(entry.performedAt).toLocaleString()}
+                    </td>
+                    <td style={{ padding: '14px 20px', color: '#334155', fontWeight: '700', fontSize: '12px' }}>{entry.performedByName}</td>
+                    <td style={{ padding: '14px 20px', color: '#8d153a', fontWeight: '700', fontSize: '12px' }}>{entry.complaintId}</td>
+                    <td style={{ padding: '14px 20px', color: '#00534e', fontWeight: '700', fontSize: '12px' }}>{entry.action.replace('_', ' ')}</td>
+                    <td style={{ padding: '14px 20px', color: '#334155', fontWeight: '600', fontSize: '12px' }}>{entry.field}: {entry.beforeValue} → {entry.afterValue}</td>
+                    <td style={{ padding: '14px 20px', color: '#475569', fontSize: '12px' }}>{entry.reason}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
