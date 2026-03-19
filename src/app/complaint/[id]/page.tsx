@@ -10,6 +10,7 @@ import {
   mockAuditTrail,
   governmentDepartments
 } from '@/data/mockData';
+import { appendDecisionLedgerEntry, readDecisionLedger, type DecisionLedgerEntry } from '@/lib/decisionLedger';
 
 export default function ComplaintDetail() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function ComplaintDetail() {
   const [internalNotes, setInternalNotes] = useState<any[]>([]);
   const [responses, setResponses] = useState<any[]>([]);
   const [auditTrail, setAuditTrail] = useState<any[]>([]);
+  const [decisionLedger, setDecisionLedger] = useState<DecisionLedgerEntry[]>([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   
   // Modal states
@@ -31,6 +33,7 @@ export default function ComplaintDetail() {
   // Form states
   const [newStatus, setNewStatus] = useState('');
   const [statusReason, setStatusReason] = useState('');
+  const [forwardReason, setForwardReason] = useState('');
   const [newNote, setNewNote] = useState('');
   const [isPrivateNote, setIsPrivateNote] = useState(true);
   const [newResponse, setNewResponse] = useState('');
@@ -61,10 +64,34 @@ export default function ComplaintDetail() {
     setInternalNotes(mockInternalNotes.filter(n => n.complaintId === complaintId));
     setResponses(mockResponses.filter(r => r.complaintId === complaintId));
     setAuditTrail(mockAuditTrail.filter(a => a.complaintId === complaintId));
+    setDecisionLedger(readDecisionLedger().filter((entry) => entry.complaintId === complaintId));
   }, [params.id]);
 
   const handleUpdateStatus = () => {
-    if (!newStatus) return;
+    if (!newStatus || !complaint) return;
+    if (!statusReason.trim()) {
+      setMessage('Reason is required for status updates.');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+
+    const normalizedStatus = newStatus.toLowerCase();
+    const action = normalizedStatus === 'resolved' ? 'APPROVE' : normalizedStatus === 'rejected' ? 'REJECT' : 'STATUS_EDIT';
+    const decisionEntry: DecisionLedgerEntry = {
+      id: `decision_${Date.now()}`,
+      complaintId: complaint.id,
+      departmentId: complaint.departmentId,
+      department: complaint.department,
+      action,
+      field: 'status',
+      beforeValue: complaint.status,
+      afterValue: newStatus,
+      reason: statusReason.trim(),
+      performedById: user?.id || 'unknown',
+      performedByName: user?.name || 'Unknown Officer',
+      performedAt: new Date().toISOString(),
+    };
+
     const newAudit = {
       id: `audit_${Date.now()}`,
       complaintId: complaint.id,
@@ -72,11 +99,15 @@ export default function ComplaintDetail() {
       performedBy: user?.id,
       performedByName: user?.name,
       timestamp: new Date().toISOString(),
-      details: { oldStatus: complaint.status, newStatus, reason: statusReason }
+      details: { oldStatus: complaint.status, newStatus, reason: statusReason.trim() }
     };
+
+    const updatedLedger = appendDecisionLedgerEntry(decisionEntry).filter((entry) => entry.complaintId === complaint.id);
+    setDecisionLedger(updatedLedger);
     setAuditTrail([newAudit, ...auditTrail]);
     setComplaint({ ...complaint, status: newStatus });
     setShowStatusModal(false);
+    setStatusReason('');
     setMessage('Status updated successfully!');
     setTimeout(() => setMessage(''), 3000);
   };
@@ -118,7 +149,28 @@ export default function ComplaintDetail() {
   };
 
   const handleForwardDepartment = () => {
-    if (!selectedDepartment) return;
+    if (!selectedDepartment || !complaint) return;
+    if (!forwardReason.trim()) {
+      setMessage('Reason is required before forwarding a case.');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+
+    const decisionEntry: DecisionLedgerEntry = {
+      id: `decision_${Date.now()}`,
+      complaintId: complaint.id,
+      departmentId: complaint.departmentId,
+      department: complaint.department,
+      action: 'FIELD_EDIT',
+      field: 'department',
+      beforeValue: complaint.department || 'Unassigned',
+      afterValue: selectedDepartment,
+      reason: forwardReason.trim(),
+      performedById: user?.id || 'unknown',
+      performedByName: user?.name || 'Unknown Officer',
+      performedAt: new Date().toISOString(),
+    };
+
     const newAudit = {
       id: `audit_${Date.now()}`,
       complaintId: complaint.id,
@@ -126,11 +178,15 @@ export default function ComplaintDetail() {
       performedBy: user?.id,
       performedByName: user?.name,
       timestamp: new Date().toISOString(),
-      details: { fromDepartment: complaint.department, toDepartment: selectedDepartment }
+      details: { fromDepartment: complaint.department, toDepartment: selectedDepartment, reason: forwardReason.trim() }
     };
+
+    const updatedLedger = appendDecisionLedgerEntry(decisionEntry).filter((entry) => entry.complaintId === complaint.id);
+    setDecisionLedger(updatedLedger);
     setAuditTrail([newAudit, ...auditTrail]);
     setComplaint({ ...complaint, department: selectedDepartment });
     setShowForwardModal(false);
+    setForwardReason('');
     setMessage(`Complaint forwarded to ${selectedDepartment}`);
     setTimeout(() => setMessage(''), 3000);
   };
@@ -276,7 +332,7 @@ export default function ComplaintDetail() {
                   onClick={() => setActiveTab('audit')}
                   style={{ padding: '15px 25px', cursor: 'pointer', background: 'none', border: 'none', borderBottom: activeTab === 'audit' ? '3px solid #8d153a' : 'none', color: activeTab === 'audit' ? '#8d153a' : '#64748b', fontWeight: '800', fontSize: '14px' }}
                 >
-                  AUDIT LOG
+                  AUDIT LOG ({decisionLedger.length})
                 </button>
               </div>
 
@@ -343,12 +399,18 @@ export default function ComplaintDetail() {
 
                 {activeTab === 'audit' && (
                   <div>
-                    {auditTrail.map(entry => (
+                    {decisionLedger.length === 0 ? (
+                      <div style={{ backgroundColor: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '10px', padding: '20px', color: '#64748b', fontSize: '14px' }}>
+                        No decision records captured for this case yet.
+                      </div>
+                    ) : decisionLedger.map(entry => (
                       <div key={entry.id} style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
-                        <div style={{ minWidth: '80px', fontSize: '11px', color: '#94a3b8', fontWeight: '700', paddingTop: '4px' }}>{new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                        <div style={{ minWidth: '80px', fontSize: '11px', color: '#94a3b8', fontWeight: '700', paddingTop: '4px' }}>{new Date(entry.performedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                         <div style={{ flex: 1, padding: '10px 15px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '4px solid #8d153a' }}>
                           <div style={{ fontWeight: '700', fontSize: '13px', color: '#1e293b' }}>{entry.action.replace('_', ' ')}</div>
                           <div style={{ fontSize: '12px', color: '#64748b' }}>BY: {entry.performedByName}</div>
+                          <div style={{ fontSize: '12px', color: '#475569', marginTop: '4px' }}>{entry.field}: {entry.beforeValue} → {entry.afterValue}</div>
+                          <div style={{ fontSize: '12px', color: '#8d153a', marginTop: '4px' }}>Reason: {entry.reason}</div>
                         </div>
                       </div>
                     ))}
@@ -415,6 +477,12 @@ export default function ComplaintDetail() {
                   <option value="resolved">Resolved</option>
                   <option value="rejected">Rejected</option>
                 </select>
+                <textarea
+                  value={statusReason}
+                  onChange={(e) => setStatusReason(e.target.value)}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', minHeight: '90px', marginBottom: '20px' }}
+                  placeholder="Required: explain why this decision is being made..."
+                />
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button onClick={() => setShowStatusModal(false)} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}>CANCEL</button>
                   <button onClick={handleUpdateStatus} style={{ flex: 2, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#8d153a', color: 'white', fontWeight: '700' }}>UPDATE</button>
@@ -428,6 +496,12 @@ export default function ComplaintDetail() {
                   <option value="">Select Destination Ministry...</option>
                   {governmentDepartments.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
+                <textarea
+                  value={forwardReason}
+                  onChange={(e) => setForwardReason(e.target.value)}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', minHeight: '90px', marginBottom: '20px' }}
+                  placeholder="Required: justify why this case should be forwarded..."
+                />
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button onClick={() => setShowForwardModal(false)} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}>CANCEL</button>
                   <button onClick={handleForwardDepartment} style={{ flex: 2, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#8d153a', color: 'white', fontWeight: '700' }}>TRANSFER</button>

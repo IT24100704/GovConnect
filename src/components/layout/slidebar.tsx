@@ -35,6 +35,44 @@ export default function Sidebar() {
           Dashboard
         </Link>
 
+        <Link
+          href="/communication-hub"
+          className={`flex items-center px-6 py-3 text-sm ${
+            pathname === '/communication-hub'
+              ? 'bg-blue-50 text-blue-600 border-r-4 border-blue-600'
+              : 'text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          <span className="mr-3">💬</span>
+          Communication Hub
+        </Link>
+
+        <Link
+          href="/analytics-dashboard"
+          className={`flex items-center px-6 py-3 text-sm ${
+            pathname === '/analytics-dashboard'
+              ? 'bg-blue-50 text-blue-600 border-r-4 border-blue-600'
+              : 'text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          <span className="mr-3">📈</span>
+          Analytics
+        </Link>
+
+        <div style={{ height: '1px', background: '#e5e7eb', margin: '12px 0' }} />
+
+        <Link
+          href="/complaint-detail/GRV-8821"
+          className={`flex items-center px-6 py-3 text-sm ${
+            pathname.startsWith('/complaint-detail')
+              ? 'bg-blue-50 text-blue-600 border-r-4 border-blue-600'
+              : 'text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          <span className="mr-3">🔍</span>
+          View Complaints
+        </Link>
+
         {user && (
           <div className="px-6 py-4 mt-4 bg-gray-50">
             <p className="text-xs text-gray-500">Logged in as:</p>
